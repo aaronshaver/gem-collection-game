@@ -24,6 +24,33 @@ final class NavigationTests: XCTestCase {
     }
 
     @MainActor
+    func testRejectedDragReturnsBothRocksHome() {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["Play"].tap()
+        let source = app.otherElements["rock-6"]
+        let target = app.otherElements["rock-7"]
+        XCTAssertTrue(source.waitForExistence(timeout: 3))
+        let originalSource = source.frame
+        let originalTarget = target.frame
+        let start = source.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        let destination = target.coordinate(withNormalizedOffset: CGVector(dx: 0.55, dy: 0.5))
+        start.press(forDuration: 0.15, thenDragTo: destination, withVelocity: .slow, thenHoldForDuration: 0.5)
+        XCTAssertEqual(source.frame.midX, originalSource.midX, accuracy: 1)
+        XCTAssertEqual(target.frame.midX, originalTarget.midX, accuracy: 1)
+        XCTAssertEqual(source.frame.midY, originalSource.midY, accuracy: 1)
+        capture("Rejected Drag Returned Home")
+        let early = start.withOffset(CGVector(dx: originalSource.width * 0.55, dy: 0))
+        start.press(forDuration: 0.15, thenDragTo: early)
+        let returned = NSPredicate { _, _ in
+            abs(source.frame.midX - originalSource.midX) < 1 &&
+            abs(target.frame.midX - originalTarget.midX) < 1
+        }
+        let settled = XCTNSPredicateExpectation(predicate: returned, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [settled], timeout: 3), .completed)
+    }
+
+    @MainActor
     private func capture(_ name: String) {
         let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
         attachment.name = name

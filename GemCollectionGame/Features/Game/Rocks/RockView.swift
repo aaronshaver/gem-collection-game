@@ -5,6 +5,7 @@ struct RockView: View {
 
     var body: some View {
         Canvas { context, size in
+            let gray = rock.gray - 0.09
             func point(_ p: Rock.Point) -> CGPoint {
                 CGPoint(x: p.x * size.width, y: (p.y * 0.84 + 0.025) * size.height)
             }
@@ -29,20 +30,20 @@ struct RockView: View {
             shadow.fill(polygon(base), with: .color(.black.opacity(0.45)))
 
             // Extruded side walls remain visible below the illuminated top face.
-            context.fill(polygon(base), with: .color(Color(white: rock.gray - 0.25)))
+            context.fill(polygon(base), with: .color(Color(white: gray - 0.25)))
             for i in rim.indices {
                 let j = (i + 1) % rim.count
                 let face = polygon([rim[i], rim[j], base[j], base[i]])
                 let light = 0.09 * (1 - rim[i].x / size.width)
                 context.fill(face, with: .linearGradient(
-                    Gradient(colors: [Color(white: rock.gray - 0.12 + light),
-                                      Color(white: rock.gray - 0.30 + light)]),
+                    Gradient(colors: [Color(white: gray - 0.12 + light),
+                                      Color(white: gray - 0.30 + light)]),
                     startPoint: rim[i], endPoint: base[i]))
             }
             let silhouette = polygon(rim)
             context.fill(silhouette, with: .radialGradient(
-                Gradient(colors: [Color(white: rock.gray + 0.31), Color(white: rock.gray + 0.04),
-                                  Color(white: rock.gray - 0.19)]),
+                Gradient(colors: [Color(white: gray + 0.23), Color(white: gray + 0.04),
+                                  Color(white: gray - 0.19)]),
                 center: point(rock.highlight), startRadius: 0, endRadius: size.width * 0.70))
 
             // Broad bevel facets give chipped edges volume instead of a flat outline.
