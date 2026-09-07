@@ -25,7 +25,7 @@ struct PopulationGenerator {
         shapes = try WeightedTable(configuration.shapes.map { ($0, $0.weight) })
     }
 
-    func generate(seed: UInt64, count: Int, existingRocks: [Rock] = []) -> [BoardPiece] {
+    func generate(seed: UInt64, count: Int, existingRocks: [Rock] = [], startingID: Int = 0) -> [BoardPiece] {
         let random = GKLinearCongruentialRandomSource(seed: seed)
         func unit() -> Double { Double(random.nextUniform()) }
         func objectSeed() -> UInt64 {
@@ -36,13 +36,13 @@ struct PopulationGenerator {
             let isGem = unit() < configuration.gemProbability
             let seed = objectSeed()
             if isGem {
-                return .gem(Gem(id: index, seed: seed, grade: grades.select(unit: unit()),
+                return .gem(Gem(id: startingID + index, seed: seed, grade: grades.select(unit: unit()),
                                 color: colors.select(unit: unit()), shape: shapes.select(unit: unit())))
             }
             if index < existingRocks.count, existingRocks[index].id == index {
                 return .rock(existingRocks[index])
             }
-            return .rock(Rock(id: index, seed: seed))
+            return .rock(Rock(id: startingID + index, seed: seed))
         }
     }
 }

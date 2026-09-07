@@ -2,6 +2,9 @@ import SwiftUI
 
 struct GemBoardView: View {
     let pieces: [BoardPiece]
+    let collectedIDs: Set<Int>
+    let spawnRows: [Int: Int]
+    let isResolving: Bool
     let onSwap: (Int, Int) -> Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var drag: BoardDrag?
@@ -22,6 +25,7 @@ struct GemBoardView: View {
             }
             .frame(width: layout.width, height: layout.height)
             .coordinateSpace(name: "rockBoard")
+            .clipped()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: geometry.size) { _ in drag = nil }
         }
@@ -38,12 +42,17 @@ struct GemBoardView: View {
         let row = index / BoardLayout.columns
         let column = index % BoardLayout.columns
         let label = "\(pieces[index].label), row \(row + 1), column \(column + 1)"
+        let collected = collectedIDs.contains(pieces[index].id)
         let lifted = drag?.source == index && drag?.thresholdReached == false
         let scale: CGFloat = lifted && !reduceMotion ? 1.07 : 1
         let layer: Double = drag?.source == index ? 2 : (drag?.target == index ? 1 : 0)
         return pieceArtwork(pieces[index])
             .frame(width: layout.gemDiameter, height: layout.gemDiameter)
-            .scaleEffect(scale)
+            .scaleEffect(collected ? (reduceMotion ? 1 : 0.15) : scale)
+            .opacity(collected ? 0 : 1)
+            .overlay {
+                if collected { CollectionBurst(tint: burstColor(pieces[index])) }
+            }
             .frame(width: layout.cellSize, height: layout.cellSize)
             .contentShape(Rectangle())
             .accessibilityElement(children: .ignore)
@@ -52,10 +61,19 @@ struct GemBoardView: View {
             .accessibilityHint("Drag to form a line of three matching colors. Other swaps spring back.")
             .accessibilityIdentifier("\(pieces[index].isRock ? "rock" : "gem")-\(index)")
             .offset(offset(for: index))
+            .offset(y: CGFloat((spawnRows[pieces[index].id] ?? row) - row) * layout.cellSize)
             .position(x: (CGFloat(column) + 0.5) * layout.cellSize,
                       y: (CGFloat(row) + 0.5) * layout.cellSize)
             .zIndex(layer)
             .gesture(rockGesture(index: index, cellSize: layout.cellSize))
+            .allowsHitTesting(!isResolving)
+    }
+
+    private func burstColor(_ piece: BoardPiece) -> Color {
+        if case .gem(let gem) = piece {
+            return Color(red: gem.color.red, green: gem.color.green, blue: gem.color.blue)
+        }
+        return .yellow
     }
 
     @ViewBuilder
@@ -74,6 +92,7 @@ struct GemBoardView: View {
     }
 
     private func updateDrag(index: Int, translation: CGSize, startLocation: CGPoint, cellSize: CGFloat) {
+        guard !isResolving else { return }
         if drag == nil {
             let centerX = (CGFloat(index % BoardLayout.columns) + 0.5) * cellSize
             let centerY = (CGFloat(index / BoardLayout.columns) + 0.5) * cellSize

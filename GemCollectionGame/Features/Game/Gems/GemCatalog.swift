@@ -31,7 +31,7 @@ struct PopulationConfiguration: Codable, Equatable {
     var shapes: [GemShape]
 
     static let standard = PopulationConfiguration(
-        gemProbability: 0.50,
+        gemProbability: 0.70,
         grades: [
             GemGrade(id: "cracked", name: "Cracked", crackCount: 3, sparkleCount: 0, weight: 4),
             GemGrade(id: "dull", name: "Dull", crackCount: 0, sparkleCount: 0, weight: 2),

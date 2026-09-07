@@ -14,7 +14,7 @@ final class NavigationTests: XCTestCase {
         capture("Main Menu")
         app.buttons["Play"].tap()
         XCTAssertTrue(app.otherElements["gemBoard"].waitForExistence(timeout: 3))
-        for title in ["Collection", "Achievements", "Shop"] {
+        for title in ["Collection", "Achievements", "Toys"] {
             app.buttons[title].tap()
             XCTAssertTrue(app.otherElements["gemBoard"].exists)
         }

@@ -1,12 +1,14 @@
 import SwiftUI
 
 struct StatsBarView: View {
+    let coins: Int
+
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "dollarsign.circle.fill")
                 .foregroundStyle(Color.yellow)
                 .accessibilityHidden(true)
-            Text("0")
+            Text("\(coins)")
                 .monospacedDigit()
             Spacer()
         }
@@ -16,6 +18,7 @@ struct StatsBarView: View {
         .padding(.vertical, 12)
         .background(.white.opacity(0.05))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Coins: 0")
+        .accessibilityLabel("Coins: \(coins)")
+        .accessibilityIdentifier("coinCount")
     }
 }

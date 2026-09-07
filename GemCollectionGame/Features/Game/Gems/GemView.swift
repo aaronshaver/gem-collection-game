@@ -77,7 +77,8 @@ struct GemView: View {
             }
             for (index, sparkle) in gem.sparkles.enumerated() {
                 let center = point(sparkle)
-                let radius = size.width * (index == 0 ? 0.11 : 0.055)
+                let storedSize = gem.sparkleSizes.flatMap { index < $0.count ? $0[index] : nil }
+                let radius = size.width * (storedSize ?? (index == 0 ? 0.11 : 0.055))
                 context.fill(Path(ellipseIn: CGRect(x: center.x - radius, y: center.y - radius,
                                                     width: radius * 2, height: radius * 2)),
                              with: .radialGradient(Gradient(colors: [.white.opacity(0.5), .clear]),

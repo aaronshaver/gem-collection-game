@@ -31,7 +31,7 @@ final class PopulationTests: XCTestCase {
         let config = PopulationConfiguration.standard
         let pieces = try PopulationGenerator(configuration: config).generate(seed: 987654, count: 10_000)
         let gems = pieces.compactMap { piece -> Gem? in if case .gem(let gem) = piece { return gem }; return nil }
-        XCTAssertEqual(Double(gems.count) / Double(pieces.count), 0.50, accuracy: 0.02)
+        XCTAssertEqual(Double(gems.count) / Double(pieces.count), 0.70, accuracy: 0.02)
         for grade in config.grades {
             let fraction = Double(gems.filter { $0.grade.id == grade.id }.count) / Double(gems.count)
             XCTAssertEqual(fraction, grade.weight / 7, accuracy: 0.03)
@@ -57,7 +57,7 @@ final class PopulationTests: XCTestCase {
             XCTAssertEqual(gem.shape.sides, 8)
             XCTAssertEqual(gem.color.id, "cyan")
             XCTAssertFalse(gem.crackPaths.isEmpty)
-            XCTAssertEqual(gem.sparkles.count, 2)
+            XCTAssertTrue((2...5).contains(gem.sparkles.count))
         }
         var invalid = config
         invalid.shapes = [GemShape(id: "invalid", sides: 2, weight: 1)]

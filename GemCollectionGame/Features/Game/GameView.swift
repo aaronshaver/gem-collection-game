@@ -1,16 +1,14 @@
 import SwiftUI
 
 struct GameView: View {
-    let pieces: [BoardPiece]
+    @ObservedObject var board: GameBoard
     let onMainMenu: () -> Void
-    let onRegenerate: () -> Void
-    let onSwap: (Int, Int) -> Bool
     @State private var fieldID = UUID()
 
     var body: some View {
         VStack(spacing: 0) {
-            StatsBarView()
-            GemBoardView(pieces: pieces, onSwap: onSwap)
+            StatsBarView(coins: board.coins)
+            GemBoardView(pieces: board.pieces, collectedIDs: board.collectedIDs, spawnRows: board.spawnRows, isResolving: board.isResolving, onSwap: board.swap)
                 .id(fieldID)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
@@ -20,6 +18,14 @@ struct GameView: View {
             GameNavigationBar(onMainMenu: onMainMenu)
         }
         .overlay {
+            if let count = board.matchBannerCount {
+                MatchBanner(count: count)
+                    .transition(.opacity)
+                    .allowsHitTesting(false)
+            }
+        }
+        .onAppear { board.resolveIfNeeded() }
+        .overlay {
             #if DEBUG
             VStack {
                 Spacer()
@@ -27,7 +33,7 @@ struct GameView: View {
                     Spacer()
                     DebugRefreshButton {
                         fieldID = UUID()
-                        onRegenerate()
+                        board.regenerate()
                     }
                 }
             }
@@ -40,7 +46,7 @@ struct GameView: View {
 #Preview {
     ZStack {
         GameBackground()
-        GameView(pieces: try! PopulationGenerator(configuration: .standard).generate(seed: 42, count: BoardLayout.cellCount), onMainMenu: {}, onRegenerate: {}, onSwap: { _, _ in false })
+        GameView(board: GameBoard(), onMainMenu: {})
     }
     .preferredColorScheme(.dark)
 }

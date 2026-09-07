@@ -8,7 +8,7 @@ struct GameNavigationBar: View {
         HStack(spacing: 4) {
             tab("Collection", symbol: "square.grid.2x2", action: {})
             tab("Achievements", symbol: "trophy", action: {})
-            tab("Shop", symbol: "bag", action: {})
+            tab("Toys", symbol: "wand.and.stars", action: {})
             tab("Main Menu", symbol: "house", action: onMainMenu)
         }
         .padding(.horizontal, 8)

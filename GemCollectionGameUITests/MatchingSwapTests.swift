@@ -7,6 +7,8 @@ final class MatchingSwapTests: XCTestCase {
         app.launch()
         app.buttons["Play"].tap()
         XCTAssertTrue(app.otherElements["gemBoard"].waitForExistence(timeout: 3))
+        let coinBar = app.otherElements["coinCount"]
+        let originalCoins = Int(coinBar.label.components(separatedBy: ": ").last ?? "0") ?? 0
         for _ in 0..<10 {
             let elements = app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH 'rock-' OR identifier BEGINSWITH 'gem-'"))
                 .allElementsBoundByIndex
@@ -25,10 +27,11 @@ final class MatchingSwapTests: XCTestCase {
                 let from = source.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
                 let to = target.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
                 from.press(forDuration: 0.1, thenDragTo: to, withVelocity: .slow, thenHoldForDuration: 0.5)
-                let newSourceID = "\(colors[pair.1] == nil ? "rock" : "gem")-\(pair.0)"
-                let newTargetID = "\(colors[pair.0] == nil ? "rock" : "gem")-\(pair.1)"
-                XCTAssertTrue(app.otherElements[newSourceID].label.hasPrefix(labels[pair.1]))
-                XCTAssertTrue(app.otherElements[newTargetID].label.hasPrefix(labels[pair.0]))
+                let rewarded = NSPredicate { _, _ in
+                    let current = Int(coinBar.label.components(separatedBy: ": ").last ?? "0") ?? 0
+                    return current >= originalCoins + 3
+                }
+                XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: rewarded, object: nil)], timeout: 10), .completed)
                 let capture = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
                 capture.name = "Successful Matching Swap"
                 capture.lifetime = .keepAlways
