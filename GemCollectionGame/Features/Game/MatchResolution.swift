@@ -1,7 +1,14 @@
 struct MatchBatch {
     let lines: [[Int]]
     var indices: Set<Int> { Set(lines.flatMap { $0 }) }
-    var coins: Int { indices.count }
+    let rewards: [MatchReward]
+    var coins: Int {
+        var rates: [Int: Int] = [:]
+        for reward in rewards {
+            for index in reward.indices { rates[index] = max(rates[index] ?? 0, reward.coinsPerGem) }
+        }
+        return rates.values.reduce(0, +)
+    }
 }
 
 struct GravityResult {
@@ -12,7 +19,7 @@ struct GravityResult {
 
 enum MatchResolution {
     static func scan(_ pieces: [BoardPiece], columns: Int = BoardLayout.columns) -> MatchBatch {
-        guard columns > 0 else { return MatchBatch(lines: []) }
+        guard columns > 0 else { return MatchBatch(lines: [], rewards: []) }
         var lines: [[Int]] = []
         for index in pieces.indices {
             guard let color = MatchRules.color(of: pieces[index]) else { continue }
@@ -31,7 +38,7 @@ enum MatchResolution {
                 if line.count >= 3 { lines.append(line) }
             }
         }
-        return MatchBatch(lines: lines)
+        return MatchBatch(lines: lines, rewards: lines.map { MatchReward(indices: $0, pieces: pieces) })
     }
 
     static func collapse(_ pieces: [BoardPiece], removing: Set<Int>, replacements: [BoardPiece],

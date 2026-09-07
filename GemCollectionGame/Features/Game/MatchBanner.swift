@@ -1,15 +1,19 @@
 import SwiftUI
 
 struct MatchBanner: View {
-    let count: Int
+    let text: String
 
     var body: some View {
-        Text("\(count) matched: basic")
-            .font(.system(.title3, design: .rounded, weight: .semibold))
-            .foregroundStyle(.white.opacity(0.55))
-            .padding(.horizontal, 28)
-            .padding(.vertical, 14)
-            .background(.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+        Text(text)
+            .font(.system(.title, weight: .semibold))
+            .foregroundStyle(Color(white: 0.85))
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 24)
+            .frame(maxWidth: .infinity, minHeight: 112)
+            .background(.black, in: RoundedRectangle(cornerRadius: 18))
+            .padding(.horizontal, 16)
             .accessibilityIdentifier("matchBanner")
     }
 }

@@ -14,10 +14,10 @@ final class GameBoard: ObservableObject {
     @Published private(set) var pieces: [BoardPiece]
     @Published private(set) var coins: Int
     @Published private(set) var isResolving = false
-    @Published private(set) var matchBannerCount: Int?
+    @Published private(set) var matchBannerText: String?
     @Published private(set) var collectedIDs: Set<Int> = []
     @Published private(set) var spawnRows: [Int: Int] = [:]
-    private var pendingBanners: [Int] = []
+    private var pendingBanners: [String] = []
     private var bannerTask: Task<Void, Never>?
     private var resolutionTask: Task<Void, Never>?
     private let defaults: UserDefaults
@@ -58,7 +58,7 @@ final class GameBoard: ObservableObject {
         resolutionTask = nil
         isResolving = false
         collectedIDs = []
-        matchBannerCount = nil
+        matchBannerText = nil
         spawnRows = [:]
         let generator = try! PopulationGenerator(configuration: .standard)
         guard let fresh = try? generator.freshField(seed: UInt64.random(in: .min ... .max)) else { return }
@@ -84,11 +84,15 @@ final class GameBoard: ObservableObject {
             guard let self else { return }
             do {
                 try await Task.sleep(nanoseconds: 260_000_000)
+                var bannerSequence = MatchBannerSequence()
+                var isCascade = false
                 while !Task.isCancelled {
                     let batch = MatchResolution.scan(self.pieces)
                     guard !batch.lines.isEmpty else { break }
                     withAnimation(.easeOut(duration: 0.34)) {
-                        self.enqueueMatchBanner(batch.indices.count)
+                        for reward in batch.rewards {
+                            self.enqueueMatchBanner(bannerSequence.message(for: reward.banner, isCascade: isCascade))
+                        }
                         self.collectedIDs = Set(batch.indices.map { self.pieces[$0].id })
                     }
                     try await Task.sleep(nanoseconds: 380_000_000)
@@ -110,6 +114,7 @@ final class GameBoard: ObservableObject {
                         self.spawnRows = [:]
                     }
                     try await Task.sleep(nanoseconds: 450_000_000)
+                    isCascade = true
                 }
                 self.isResolving = false
                 self.resolutionTask = nil
@@ -117,7 +122,7 @@ final class GameBoard: ObservableObject {
                 // Regeneration owns the replacement state after cancellation.
             } catch {
                 self.collectedIDs = []
-                self.matchBannerCount = nil
+                self.matchBannerText = nil
                 self.spawnRows = [:]
                 self.isResolving = false
                 self.resolutionTask = nil
@@ -126,8 +131,8 @@ final class GameBoard: ObservableObject {
     }
 
     /// FIFO presentation keeps rapid cascades from replacing earlier match notices.
-    func enqueueMatchBanner(_ count: Int) {
-        pendingBanners.append(count)
+    func enqueueMatchBanner(_ text: String) {
+        pendingBanners.append(text)
         guard bannerTask == nil else { return }
         bannerTask = Task { @MainActor [weak self] in
             guard let self else { return }
@@ -135,9 +140,9 @@ final class GameBoard: ObservableObject {
                 while !self.pendingBanners.isEmpty {
                     try Task.checkCancellation()
                     let next = self.pendingBanners.removeFirst()
-                    withAnimation(.easeOut(duration: 0.12)) { self.matchBannerCount = next }
-                    try await Task.sleep(nanoseconds: 700_000_000)
-                    withAnimation(.easeOut(duration: 0.15)) { self.matchBannerCount = nil }
+                    withAnimation(.easeOut(duration: 0.12)) { self.matchBannerText = next }
+                    try await Task.sleep(nanoseconds: 1_200_000_000)
+                    withAnimation(.easeOut(duration: 0.15)) { self.matchBannerText = nil }
                     // Includes the fade-out and a short clear gap before the next notice.
                     try await Task.sleep(nanoseconds: 300_000_000)
                 }

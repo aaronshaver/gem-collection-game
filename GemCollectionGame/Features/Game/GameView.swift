@@ -18,8 +18,8 @@ struct GameView: View {
             GameNavigationBar(onMainMenu: onMainMenu)
         }
         .overlay {
-            if let count = board.matchBannerCount {
-                MatchBanner(count: count)
+            if let text = board.matchBannerText {
+                MatchBanner(text: text)
                     .transition(.opacity)
                     .allowsHitTesting(false)
             }

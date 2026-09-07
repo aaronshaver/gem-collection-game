@@ -26,7 +26,7 @@ struct MainMenuView: View {
                     .foregroundStyle(GameTheme.accent)
                     .accessibilityHidden(true)
                 Text("Placeholder Game Title")
-                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                    .font(.system(.largeTitle, design: .default, weight: .bold))
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
             }

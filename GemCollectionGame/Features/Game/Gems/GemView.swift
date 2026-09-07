@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GemView: View {
     let gem: Gem
+    var animateSparkles = true
 
     var body: some View {
         Canvas { context, size in
@@ -75,23 +76,11 @@ struct GemView: View {
                                      .init(color: .clear, location: 0.54)]),
                     startPoint: .zero, endPoint: CGPoint(x: size.width, y: size.height * 0.7)))
             }
-            for (index, sparkle) in gem.sparkles.enumerated() {
-                let center = point(sparkle)
-                let storedSize = gem.sparkleSizes.flatMap { index < $0.count ? $0[index] : nil }
-                let radius = size.width * (storedSize ?? (index == 0 ? 0.11 : 0.055))
-                context.fill(Path(ellipseIn: CGRect(x: center.x - radius, y: center.y - radius,
-                                                    width: radius * 2, height: radius * 2)),
-                             with: .radialGradient(Gradient(colors: [.white.opacity(0.5), .clear]),
-                                                   center: center, startRadius: 0, endRadius: radius))
-                let star = polygon([CGPoint(x: center.x, y: center.y - radius),
-                                    CGPoint(x: center.x + radius * 0.18, y: center.y - radius * 0.18),
-                                    CGPoint(x: center.x + radius, y: center.y),
-                                    CGPoint(x: center.x + radius * 0.18, y: center.y + radius * 0.18),
-                                    CGPoint(x: center.x, y: center.y + radius),
-                                    CGPoint(x: center.x - radius * 0.18, y: center.y + radius * 0.18),
-                                    CGPoint(x: center.x - radius, y: center.y),
-                                    CGPoint(x: center.x - radius * 0.18, y: center.y - radius * 0.18)])
-                context.fill(star, with: .color(.white.opacity(0.95)))
+
+        }
+        .overlay {
+            if !gem.sparkles.isEmpty {
+                GemSparklesView(gem: gem, animated: animateSparkles)
             }
         }
         .accessibilityHidden(true)

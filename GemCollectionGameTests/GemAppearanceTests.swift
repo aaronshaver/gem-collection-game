@@ -12,7 +12,7 @@ final class GemAppearanceTests: XCTestCase {
                 ForEach(catalog.shapes) { shape in
                     HStack(spacing: 8) {
                         ForEach(catalog.colors) { color in
-                            GemView(gem: Gem(id: 0, seed: 42, grade: grade, color: color, shape: shape))
+                            GemView(gem: Gem(id: 0, seed: 42, grade: grade, color: color, shape: shape), animateSparkles: false)
                                 .frame(width: 80, height: 80)
                         }
                     }

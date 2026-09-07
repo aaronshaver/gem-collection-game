@@ -12,7 +12,7 @@ struct StatsBarView: View {
                 .monospacedDigit()
             Spacer()
         }
-        .font(.system(.caption, design: .rounded, weight: .semibold))
+        .font(.system(.caption, design: .default, weight: .semibold))
         .foregroundStyle(.white.opacity(0.8))
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
