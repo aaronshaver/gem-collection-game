@@ -15,5 +15,5 @@ struct BoardLayout {
 
     var width: CGFloat { cellSize * CGFloat(Self.columns) }
     var height: CGFloat { cellSize * CGFloat(Self.rows) }
-    var gemDiameter: CGFloat { cellSize * 0.72 }
+    var gemDiameter: CGFloat { cellSize * 0.80 }
 }

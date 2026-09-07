@@ -3,10 +3,7 @@ import GameplayKit
 
 /// Versioned, serializable appearance data; rendering never draws random values.
 struct Rock: Identifiable, Codable, Equatable {
-    struct Point: Codable, Equatable {
-        let x: Double
-        let y: Double
-    }
+    typealias Point = SurfacePoint
 
     struct Chip: Codable, Equatable {
         let points: [Point]

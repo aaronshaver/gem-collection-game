@@ -1,13 +1,13 @@
 import SwiftUI
 
 struct GameView: View {
-    let rocks: [Rock]
+    let pieces: [BoardPiece]
     let onMainMenu: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             StatsBarView()
-            GemBoardView(rocks: rocks)
+            GemBoardView(pieces: pieces)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .background(SoilBackground())
@@ -21,7 +21,7 @@ struct GameView: View {
 #Preview {
     ZStack {
         GameBackground()
-        GameView(rocks: (0..<BoardLayout.cellCount).map { Rock(id: $0, seed: UInt64($0)) }, onMainMenu: {})
+        GameView(pieces: try! PopulationGenerator(configuration: .standard).generate(seed: 42, count: BoardLayout.cellCount), onMainMenu: {})
     }
     .preferredColorScheme(.dark)
 }

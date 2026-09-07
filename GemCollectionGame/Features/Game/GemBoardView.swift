@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GemBoardView: View {
-    let rocks: [Rock]
+    let pieces: [BoardPiece]
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var drag: BoardDrag?
     @GestureState private var isTouching = false
@@ -14,7 +14,7 @@ struct GemBoardView: View {
         GeometryReader { geometry in
             let layout = BoardLayout(availableSize: geometry.size)
             ZStack {
-                ForEach(rocks.indices, id: \.self) { index in
+                ForEach(pieces.indices, id: \.self) { index in
                     rockCell(index: index, layout: layout)
                 }
             }
@@ -28,18 +28,18 @@ struct GemBoardView: View {
             if !touching { finishDrag() }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Game board, 5 columns, 9 rows, 45 gray rocks")
+        .accessibilityLabel("Game board, 5 columns, 9 rows, 45 rocks and gems")
         .accessibilityIdentifier("gemBoard")
     }
 
     private func rockCell(index: Int, layout: BoardLayout) -> some View {
         let row = index / BoardLayout.columns
         let column = index % BoardLayout.columns
-        let label = "Rock, row \(row + 1), column \(column + 1)"
+        let label = "\(pieces[index].label), row \(row + 1), column \(column + 1)"
         let lifted = drag?.source == index && drag?.rejected == false
         let scale: CGFloat = lifted && !reduceMotion ? 1.07 : 1
         let layer: Double = drag?.source == index ? 2 : (drag?.target == index ? 1 : 0)
-        return RockView(rock: rocks[index])
+        return pieceArtwork(pieces[index])
             .frame(width: layout.gemDiameter, height: layout.gemDiameter)
             .scaleEffect(scale)
             .frame(width: layout.cellSize, height: layout.cellSize)
@@ -47,13 +47,21 @@ struct GemBoardView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityHidden(false)
             .accessibilityLabel(label)
-            .accessibilityHint("Drag toward a neighboring rock. Swapping is currently unavailable.")
-            .accessibilityIdentifier("rock-\(index)")
+            .accessibilityHint(pieces[index].isRock ? "Drag toward a neighboring rock. Swapping is currently unavailable." : "Gem preview. No interaction yet.")
+            .accessibilityIdentifier("\(pieces[index].isRock ? "rock" : "gem")-\(index)")
             .offset(offset(for: index))
             .position(x: (CGFloat(column) + 0.5) * layout.cellSize,
                       y: (CGFloat(row) + 0.5) * layout.cellSize)
             .zIndex(layer)
-            .gesture(rockGesture(index: index, cellSize: layout.cellSize))
+            .gesture(rockGesture(index: index, cellSize: layout.cellSize), including: pieces[index].isRock ? .all : .none)
+    }
+
+    @ViewBuilder
+    private func pieceArtwork(_ piece: BoardPiece) -> some View {
+        switch piece {
+        case .rock(let rock): RockView(rock: rock)
+        case .gem(let gem): GemView(gem: gem)
+        }
     }
 
     private func rockGesture(index: Int, cellSize: CGFloat) -> some Gesture {
@@ -74,6 +82,11 @@ struct GemBoardView: View {
         }
         guard var current = drag, current.source == index, !current.rejected else { return }
         current.update(translation: translation, cellSize: cellSize)
+        // Gems are display-only: an attempted rock drag into one simply returns home.
+        if let target = current.target, !pieces[target].isRock {
+            withAnimation(returnAnimation) { drag?.returnHome() }
+            return
+        }
         drag = current
         if current.rejected {
             withAnimation(returnAnimation) { drag?.returnHome() }

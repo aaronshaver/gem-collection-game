@@ -28,8 +28,13 @@ final class NavigationTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
         app.buttons["Play"].tap()
-        let source = app.otherElements["rock-6"]
-        let target = app.otherElements["rock-7"]
+        XCTAssertTrue(app.otherElements["gemBoard"].waitForExistence(timeout: 3))
+        let pair = (0..<44).first { index in
+            index % 5 < 4 && app.otherElements["rock-\(index)"].exists && app.otherElements["rock-\(index + 1)"].exists
+        }
+        guard let pair else { XCTFail("Expected adjacent rocks in the saved board"); return }
+        let source = app.otherElements["rock-\(pair)"]
+        let target = app.otherElements["rock-\(pair + 1)"]
         XCTAssertTrue(source.waitForExistence(timeout: 3))
         let originalSource = source.frame
         let originalTarget = target.frame
