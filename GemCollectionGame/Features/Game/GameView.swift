@@ -4,12 +4,13 @@ struct GameView: View {
     let pieces: [BoardPiece]
     let onMainMenu: () -> Void
     let onRegenerate: () -> Void
+    let onSwap: (Int, Int) -> Bool
     @State private var fieldID = UUID()
 
     var body: some View {
         VStack(spacing: 0) {
             StatsBarView()
-            GemBoardView(pieces: pieces)
+            GemBoardView(pieces: pieces, onSwap: onSwap)
                 .id(fieldID)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
@@ -39,7 +40,7 @@ struct GameView: View {
 #Preview {
     ZStack {
         GameBackground()
-        GameView(pieces: try! PopulationGenerator(configuration: .standard).generate(seed: 42, count: BoardLayout.cellCount), onMainMenu: {}, onRegenerate: {})
+        GameView(pieces: try! PopulationGenerator(configuration: .standard).generate(seed: 42, count: BoardLayout.cellCount), onMainMenu: {}, onRegenerate: {}, onSwap: { _, _ in false })
     }
     .preferredColorScheme(.dark)
 }

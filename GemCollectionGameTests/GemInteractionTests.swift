@@ -2,20 +2,6 @@ import XCTest
 @testable import GemCollectionGame
 
 final class GemInteractionTests: XCTestCase {
-    func testRejectedPairingsInBothDirections() {
-        let catalog = PopulationConfiguration.standard
-        func gem(_ color: Int) -> BoardPiece {
-            .gem(Gem(id: color, seed: 1, grade: catalog.grades[0], color: catalog.colors[color], shape: catalog.shapes[0]))
-        }
-        let rock = BoardPiece.rock(Rock(id: 99, seed: 1))
-        XCTAssertTrue(SwapRules.rejects(rock, rock))
-        XCTAssertTrue(SwapRules.rejects(rock, gem(0)))
-        XCTAssertTrue(SwapRules.rejects(gem(0), rock))
-        XCTAssertTrue(SwapRules.rejects(gem(0), gem(1)))
-        XCTAssertTrue(SwapRules.rejects(gem(1), gem(0)))
-        XCTAssertFalse(SwapRules.rejects(gem(0), gem(0)))
-    }
-
     func testCracksStayInsideEveryShapeAndVaryAcrossSeeds() {
         let catalog = PopulationConfiguration.standard
         var counts = Set<Int>()

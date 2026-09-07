@@ -7,7 +7,7 @@ struct BoardDrag: Equatable {
     private(set) var target: Int?
     private(set) var sourceOffset = CGSize.zero
     private(set) var targetOffset = CGSize.zero
-    private(set) var rejected = false
+    private(set) var thresholdReached = false
     private var direction = CGSize.zero
 
     init(source: Int, touchStartOffset: CGSize = .zero) {
@@ -16,7 +16,7 @@ struct BoardDrag: Equatable {
     }
 
     mutating func update(translation: CGSize, cellSize: CGFloat) {
-        guard !rejected, cellSize > 0 else { return }
+        guard !thresholdReached, cellSize > 0 else { return }
         if direction == .zero {
             guard max(abs(translation.width), abs(translation.height)) > cellSize * 0.10 else { return }
             if abs(translation.width) >= abs(translation.height) {
@@ -46,7 +46,7 @@ struct BoardDrag: Equatable {
         let fingerProgress = fingerX * direction.width + fingerY * direction.height
         let crossAxis = abs(fingerX * direction.height + fingerY * direction.width)
         if target != nil, fingerProgress >= cellSize * 0.70, crossAxis <= cellSize * 0.50 {
-            rejected = true
+            thresholdReached = true
         }
     }
 

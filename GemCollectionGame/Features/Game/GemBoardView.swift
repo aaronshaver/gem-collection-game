@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GemBoardView: View {
     let pieces: [BoardPiece]
+    let onSwap: (Int, Int) -> Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var drag: BoardDrag?
     @GestureState private var isTouching = false
@@ -14,7 +15,8 @@ struct GemBoardView: View {
         GeometryReader { geometry in
             let layout = BoardLayout(availableSize: geometry.size)
             ZStack {
-                ForEach(pieces.indices, id: \.self) { index in
+                ForEach(pieces) { piece in
+                    let index = pieces.firstIndex(where: { $0.id == piece.id })!
                     rockCell(index: index, layout: layout)
                 }
             }
@@ -36,7 +38,7 @@ struct GemBoardView: View {
         let row = index / BoardLayout.columns
         let column = index % BoardLayout.columns
         let label = "\(pieces[index].label), row \(row + 1), column \(column + 1)"
-        let lifted = drag?.source == index && drag?.rejected == false
+        let lifted = drag?.source == index && drag?.thresholdReached == false
         let scale: CGFloat = lifted && !reduceMotion ? 1.07 : 1
         let layer: Double = drag?.source == index ? 2 : (drag?.target == index ? 1 : 0)
         return pieceArtwork(pieces[index])
@@ -47,7 +49,7 @@ struct GemBoardView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityHidden(false)
             .accessibilityLabel(label)
-            .accessibilityHint("Drag toward a neighboring piece. Rocks and different-colored gems spring back.")
+            .accessibilityHint("Drag to form a line of three matching colors. Other swaps spring back.")
             .accessibilityIdentifier("\(pieces[index].isRock ? "rock" : "gem")-\(index)")
             .offset(offset(for: index))
             .position(x: (CGFloat(column) + 0.5) * layout.cellSize,
@@ -80,16 +82,14 @@ struct GemBoardView: View {
                 drag = BoardDrag(source: index, touchStartOffset: grabOffset)
             }
         }
-        guard var current = drag, current.source == index, !current.rejected else { return }
+        guard var current = drag, current.source == index, !current.thresholdReached else { return }
         current.update(translation: translation, cellSize: cellSize)
-        // Same-color gem mechanics remain unimplemented.
-        if let target = current.target, !SwapRules.rejects(pieces[index], pieces[target]) {
-            withAnimation(returnAnimation) { drag?.returnHome() }
-            return
-        }
         drag = current
-        if current.rejected {
-            withAnimation(returnAnimation) { drag?.returnHome() }
+        if current.thresholdReached {
+            withAnimation(returnAnimation) {
+                if let target = current.target { _ = onSwap(index, target) }
+                drag?.returnHome()
+            }
         }
     }
 

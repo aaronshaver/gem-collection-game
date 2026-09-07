@@ -80,10 +80,10 @@ final class PopulationTests: XCTestCase {
         let suite = "PopulationTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
         defer { defaults.removePersistentDomain(forName: suite) }
-        let legacy = RockBoard(defaults: defaults).rocks
+        _ = RockBoard(defaults: defaults).rocks
         let first = GameBoard(defaults: defaults).pieces
         XCTAssertEqual(first.count, 45)
         XCTAssertEqual(first, GameBoard(defaults: defaults).pieces)
-        for case .rock(let rock) in first { XCTAssertEqual(rock, legacy[rock.id]) }
+        XCTAssertFalse(MatchRules.hasMatch(in: first))
     }
 }
