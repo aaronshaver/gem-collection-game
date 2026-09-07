@@ -18,6 +18,8 @@ final class NavigationTests: XCTestCase {
             app.buttons[title].tap()
             XCTAssertTrue(app.otherElements["gemBoard"].exists)
         }
+        app.buttons["regenerateField"].tap()
+        XCTAssertTrue(app.otherElements["gemBoard"].exists)
         capture("Game Board")
         app.buttons["Main Menu"].tap()
         XCTAssertTrue(app.buttons["Play"].exists)

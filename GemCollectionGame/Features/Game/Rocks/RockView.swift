@@ -5,7 +5,7 @@ struct RockView: View {
 
     var body: some View {
         Canvas { context, size in
-            let gray = rock.gray - 0.09
+            let gray = rock.gray - 0.12
             func point(_ p: Rock.Point) -> CGPoint {
                 CGPoint(x: p.x * size.width, y: (p.y * 0.84 + 0.025) * size.height)
             }

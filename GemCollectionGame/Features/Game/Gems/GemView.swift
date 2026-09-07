@@ -66,7 +66,7 @@ struct GemView: View {
                 lip.stroke(crack, with: .color(color(light: 0.55, alpha: 0.65)),
                            style: StrokeStyle(lineWidth: size.width * 0.018, lineJoin: .bevel))
                 surface.stroke(crack, with: .color(color(light: -0.85)),
-                               style: StrokeStyle(lineWidth: size.width * 0.035, lineCap: .round, lineJoin: .bevel))
+                               style: StrokeStyle(lineWidth: size.width * 0.022, lineCap: .round, lineJoin: .bevel))
             }
             if !gem.sparkles.isEmpty {
                 surface.fill(polygon(inner), with: .linearGradient(

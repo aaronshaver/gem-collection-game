@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 final class GameBoard: ObservableObject {
     struct Save: Codable {
@@ -7,9 +8,11 @@ final class GameBoard: ObservableObject {
         let pieces: [BoardPiece]
     }
     static let storageKey = "gameBoard.population.v1"
-    let pieces: [BoardPiece]
+    @Published private(set) var pieces: [BoardPiece]
+    private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         let configuration = PopulationConfiguration.standard
         // The built-in catalog is a developer-owned invariant, covered by tests.
         let generator = try! PopulationGenerator(configuration: configuration)
@@ -26,5 +29,16 @@ final class GameBoard: ObservableObject {
             let snapshot = Save(seed: seed, configuration: configuration, pieces: pieces)
             if let data = try? JSONEncoder().encode(snapshot) { defaults.set(data, forKey: Self.storageKey) }
         }
+    }
+    func regenerate() {
+        let configuration = PopulationConfiguration.standard
+        let seed = UInt64.random(in: .min ... .max)
+        let generator = try! PopulationGenerator(configuration: configuration)
+        let fresh = generator.generate(seed: seed, count: BoardLayout.cellCount)
+        let snapshot = Save(seed: seed, configuration: configuration, pieces: fresh)
+        if let data = try? JSONEncoder().encode(snapshot) {
+            defaults.set(data, forKey: Self.storageKey)
+        }
+        pieces = fresh
     }
 }

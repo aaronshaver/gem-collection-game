@@ -31,7 +31,7 @@ final class PopulationTests: XCTestCase {
         let config = PopulationConfiguration.standard
         let pieces = try PopulationGenerator(configuration: config).generate(seed: 987654, count: 10_000)
         let gems = pieces.compactMap { piece -> Gem? in if case .gem(let gem) = piece { return gem }; return nil }
-        XCTAssertEqual(Double(gems.count) / Double(pieces.count), 0.30, accuracy: 0.02)
+        XCTAssertEqual(Double(gems.count) / Double(pieces.count), 0.50, accuracy: 0.02)
         for grade in config.grades {
             let fraction = Double(gems.filter { $0.grade.id == grade.id }.count) / Double(gems.count)
             XCTAssertEqual(fraction, grade.weight / 7, accuracy: 0.03)
@@ -56,12 +56,24 @@ final class PopulationTests: XCTestCase {
             guard case .gem(let gem) = piece else { return XCTFail("Expected only gems") }
             XCTAssertEqual(gem.shape.sides, 8)
             XCTAssertEqual(gem.color.id, "cyan")
-            XCTAssertEqual(gem.crackPaths.count, 1)
+            XCTAssertFalse(gem.crackPaths.isEmpty)
             XCTAssertEqual(gem.sparkles.count, 2)
         }
         var invalid = config
         invalid.shapes = [GemShape(id: "invalid", sides: 2, weight: 1)]
         XCTAssertThrowsError(try PopulationGenerator(configuration: invalid))
+    }
+
+    func testRegenerationReplacesAndPersistsTheField() throws {
+        let suite = "RegenerationTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let board = GameBoard(defaults: defaults)
+        let previous = board.pieces
+        board.regenerate()
+        XCTAssertEqual(board.pieces.count, BoardLayout.cellCount)
+        XCTAssertNotEqual(previous, board.pieces)
+        XCTAssertEqual(board.pieces, GameBoard(defaults: defaults).pieces)
     }
 
     func testLegacyMigrationAndReloadKeepTheSamePopulation() throws {

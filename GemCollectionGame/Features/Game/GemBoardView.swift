@@ -47,13 +47,13 @@ struct GemBoardView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityHidden(false)
             .accessibilityLabel(label)
-            .accessibilityHint(pieces[index].isRock ? "Drag toward a neighboring rock. Swapping is currently unavailable." : "Gem preview. No interaction yet.")
+            .accessibilityHint("Drag toward a neighboring piece. Rocks and different-colored gems spring back.")
             .accessibilityIdentifier("\(pieces[index].isRock ? "rock" : "gem")-\(index)")
             .offset(offset(for: index))
             .position(x: (CGFloat(column) + 0.5) * layout.cellSize,
                       y: (CGFloat(row) + 0.5) * layout.cellSize)
             .zIndex(layer)
-            .gesture(rockGesture(index: index, cellSize: layout.cellSize), including: pieces[index].isRock ? .all : .none)
+            .gesture(rockGesture(index: index, cellSize: layout.cellSize))
     }
 
     @ViewBuilder
@@ -82,8 +82,8 @@ struct GemBoardView: View {
         }
         guard var current = drag, current.source == index, !current.rejected else { return }
         current.update(translation: translation, cellSize: cellSize)
-        // Gems are display-only: an attempted rock drag into one simply returns home.
-        if let target = current.target, !pieces[target].isRock {
+        // Same-color gem mechanics remain unimplemented.
+        if let target = current.target, !SwapRules.rejects(pieces[index], pieces[target]) {
             withAnimation(returnAnimation) { drag?.returnHome() }
             return
         }

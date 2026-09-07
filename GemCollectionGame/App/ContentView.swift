@@ -8,7 +8,7 @@ struct ContentView: View {
         ZStack {
             GameBackground()
             if isPlaying {
-                GameView(pieces: board.pieces, onMainMenu: { isPlaying = false })
+                GameView(pieces: board.pieces, onMainMenu: { isPlaying = false }, onRegenerate: board.regenerate)
             } else {
                 MainMenuView(onPlay: { isPlaying = true })
             }
