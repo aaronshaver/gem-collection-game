@@ -1,14 +1,16 @@
 import SwiftUI
 
 struct GameView: View {
+    let rocks: [Rock]
     let onMainMenu: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             StatsBarView()
-            GemBoardView()
+            GemBoardView(rocks: rocks)
                 .padding(.horizontal, 20)
-                .padding(.vertical, 16)
+                .padding(.vertical, 12)
+                .background(SoilBackground())
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             GameNavigationBar(onMainMenu: onMainMenu)
@@ -19,7 +21,7 @@ struct GameView: View {
 #Preview {
     ZStack {
         GameBackground()
-        GameView(onMainMenu: {})
+        GameView(rocks: (0..<BoardLayout.cellCount).map { Rock(id: $0, seed: UInt64($0)) }, onMainMenu: {})
     }
     .preferredColorScheme(.dark)
 }

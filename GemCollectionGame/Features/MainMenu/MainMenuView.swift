@@ -8,6 +8,14 @@ struct MainMenuView: View {
             menu.padding(.vertical, 32)
             ScrollView { menu.padding(.vertical, 24) }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .bottom, alignment: .center, spacing: 0) {
+            Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0")")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 8)
+        }
     }
 
     private var menu: some View {

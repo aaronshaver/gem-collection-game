@@ -3,7 +3,7 @@ import CoreGraphics
 /// Square cells keep the entire board visible in the available safe-area space.
 struct BoardLayout {
     static let columns = 5
-    static let rows = 8
+    static let rows = 9
     static let cellCount = columns * rows
 
     let cellSize: CGFloat

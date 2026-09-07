@@ -1,15 +1,16 @@
 import SwiftUI
 
 struct GemBoardView: View {
+    let rocks: [Rock]
+
     var body: some View {
         GeometryReader { geometry in
             let layout = BoardLayout(availableSize: geometry.size)
             VStack(spacing: 0) {
-                ForEach(0..<BoardLayout.rows, id: \.self) { _ in
+                ForEach(0..<BoardLayout.rows, id: \.self) { row in
                     HStack(spacing: 0) {
-                        ForEach(0..<BoardLayout.columns, id: \.self) { _ in
-                            Circle()
-                                .fill(Color(white: 0.64).gradient)
+                        ForEach(0..<BoardLayout.columns, id: \.self) { column in
+                            RockView(rock: rocks[row * BoardLayout.columns + column])
                                 .frame(width: layout.gemDiameter, height: layout.gemDiameter)
                                 .frame(width: layout.cellSize, height: layout.cellSize)
                         }
@@ -20,7 +21,7 @@ struct GemBoardView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Game board, 5 columns, 8 rows, 40 gray gems")
+        .accessibilityLabel("Game board, 5 columns, 9 rows, 45 gray rocks")
         .accessibilityIdentifier("gemBoard")
     }
 }

@@ -2,8 +2,8 @@ import XCTest
 @testable import GemCollectionGame
 
 final class BoardLayoutTests: XCTestCase {
-    func testBoardHasFortyCells() {
-        XCTAssertEqual(BoardLayout.cellCount, 40)
+    func testBoardHasFortyFiveCells() {
+        XCTAssertEqual(BoardLayout.cellCount, 45)
     }
 
     func testBoardFitsNarrowAndShortScreens() {
@@ -13,7 +13,7 @@ final class BoardLayoutTests: XCTestCase {
             XCTAssertLessThanOrEqual(layout.height, size.height)
             XCTAssertGreaterThan(layout.gemDiameter, 0)
             XCTAssertLessThan(layout.gemDiameter, layout.cellSize)
-            XCTAssertEqual(layout.width / layout.height, 5.0 / 8.0, accuracy: 0.001)
+            XCTAssertEqual(layout.width / layout.height, 5.0 / 9.0, accuracy: 0.001)
         }
     }
 
