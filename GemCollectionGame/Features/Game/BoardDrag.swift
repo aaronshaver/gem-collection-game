@@ -3,14 +3,16 @@ import CoreGraphics
 /// Transient presentation state. Rejected drags never mutate the saved board.
 struct BoardDrag: Equatable {
     let source: Int
+    let touchStartOffset: CGSize
     private(set) var target: Int?
     private(set) var sourceOffset = CGSize.zero
     private(set) var targetOffset = CGSize.zero
     private(set) var rejected = false
     private var direction = CGSize.zero
 
-    init(source: Int) {
+    init(source: Int, touchStartOffset: CGSize = .zero) {
         self.source = source
+        self.touchStartOffset = touchStartOffset
     }
 
     mutating func update(translation: CGSize, cellSize: CGFloat) {
@@ -37,7 +39,13 @@ struct BoardDrag: Equatable {
         let pull = tension * tension * (3 - 2 * tension) * cellSize * 0.30
         targetOffset = target == nil ? .zero : CGSize(width: -direction.width * pull,
                                                       height: -direction.height * pull)
-        if target != nil, distance >= cellSize {
+        // Neighbor starts half a cell from our center; enter another 20% to reject.
+        // Include the initial grab position so this follows the finger, not the rock center.
+        let fingerX = touchStartOffset.width + translation.width
+        let fingerY = touchStartOffset.height + translation.height
+        let fingerProgress = fingerX * direction.width + fingerY * direction.height
+        let crossAxis = abs(fingerX * direction.height + fingerY * direction.width)
+        if target != nil, fingerProgress >= cellSize * 0.70, crossAxis <= cellSize * 0.50 {
             rejected = true
         }
     }

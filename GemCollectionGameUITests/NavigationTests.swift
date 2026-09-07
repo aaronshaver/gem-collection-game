@@ -34,7 +34,7 @@ final class NavigationTests: XCTestCase {
         let originalSource = source.frame
         let originalTarget = target.frame
         let start = source.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-        let destination = target.coordinate(withNormalizedOffset: CGVector(dx: 0.55, dy: 0.5))
+        let destination = target.coordinate(withNormalizedOffset: CGVector(dx: 0.22, dy: 0.5))
         start.press(forDuration: 0.15, thenDragTo: destination, withVelocity: .slow, thenHoldForDuration: 0.5)
         XCTAssertEqual(source.frame.midX, originalSource.midX, accuracy: 1)
         XCTAssertEqual(target.frame.midX, originalTarget.midX, accuracy: 1)

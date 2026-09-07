@@ -59,13 +59,18 @@ struct GemBoardView: View {
     private func rockGesture(index: Int, cellSize: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .named("rockBoard"))
             .updating($isTouching) { _, touching, _ in touching = true }
-            .onChanged { value in updateDrag(index: index, translation: value.translation, cellSize: cellSize) }
+            .onChanged { value in updateDrag(index: index, translation: value.translation, startLocation: value.startLocation, cellSize: cellSize) }
             .onEnded { _ in finishDrag() }
     }
 
-    private func updateDrag(index: Int, translation: CGSize, cellSize: CGFloat) {
+    private func updateDrag(index: Int, translation: CGSize, startLocation: CGPoint, cellSize: CGFloat) {
         if drag == nil {
-            withAnimation(.easeOut(duration: 0.10)) { drag = BoardDrag(source: index) }
+            let centerX = (CGFloat(index % BoardLayout.columns) + 0.5) * cellSize
+            let centerY = (CGFloat(index / BoardLayout.columns) + 0.5) * cellSize
+            let grabOffset = CGSize(width: startLocation.x - centerX, height: startLocation.y - centerY)
+            withAnimation(.easeOut(duration: 0.10)) {
+                drag = BoardDrag(source: index, touchStartOffset: grabOffset)
+            }
         }
         guard var current = drag, current.source == index, !current.rejected else { return }
         current.update(translation: translation, cellSize: cellSize)
