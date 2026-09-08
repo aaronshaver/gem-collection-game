@@ -7,27 +7,24 @@ final class MatchRewardTests: XCTestCase {
         return grades.indices.map { .gem(Gem(id: $0, seed: UInt64($0), grade: c.grades[grades[$0]], color: c.colors[3], shape: c.shapes[shapes[$0]])) }
     }
 
-    func testAllFourRewardTiersAndBannerLabels() {
-        let examples: [([Int], [Int], Int, String)] = [
-            ([0, 1, 2], [0, 1, 2], 3, "3 Green matched"),
-            ([1, 1, 1], [0, 1, 2], 12, "3 Green Dull matched"),
-            ([0, 1, 2], [2, 2, 2], 15, "3 Green 5-sided matched"),
-            ([2, 2, 2, 2, 2], [2, 2, 2, 2, 2], 40, "5 Green Shiny 5-sided matched")
+    func testAllFourRewardTiers() {
+        let examples: [([Int], [Int], Int)] = [
+            ([0, 1, 2], [0, 1, 2], 3),
+            ([1, 1, 1], [0, 1, 2], 12),
+            ([0, 1, 2], [2, 2, 2], 15),
+            ([2, 2, 2, 2, 2], [2, 2, 2, 2, 2], 40)
         ]
-        for (grades, shapes, coins, label) in examples {
-            let batch = MatchResolution.scan(gems(grades: grades, shapes: shapes))
-            XCTAssertEqual(batch.coins, coins)
-            XCTAssertEqual(batch.rewards.first?.banner, label)
+        for (grades, shapes, coins) in examples {
+            XCTAssertEqual(MatchResolution.scan(gems(grades: grades, shapes: shapes)).coins, coins)
         }
     }
 
     func testPartialClassAndShapeDoNotEarnBonus() {
         let batch = MatchResolution.scan(gems(grades: [1, 1, 1, 1, 2], shapes: [2, 2, 2, 2, 3]))
         XCTAssertEqual(batch.coins, 5)
-        XCTAssertEqual(batch.rewards.first?.banner, "5 Green matched")
     }
 
-    func testIntersectingClassAndShapeBonusesNeverCombineIntoEight() {
+    func testOnlyIntendedLineEarnsRewardsAtIntersections() {
         let c = PopulationConfiguration.standard
         // A cross, a T, and an L; each has two qualifying three-gem lines.
         for (horizontal, vertical) in [([5, 6, 7], [1, 6, 11]),
@@ -43,10 +40,12 @@ final class MatchRewardTests: XCTestCase {
                 let grade = index == shared ? 1 : 0
                 pieces[index] = .gem(Gem(id: index, seed: UInt64(index), grade: c.grades[grade], color: c.colors[0], shape: c.shapes[2]))
             }
-            let batch = MatchResolution.scan(pieces)
-            XCTAssertEqual(batch.lines.count, 2)
-            XCTAssertEqual(Set(batch.rewards.map(\.coinsPerGem)), [4, 5])
-            XCTAssertEqual(batch.coins, 23) // Three at 5, plus two at 4. Shared gem gets 5, not 8.
+            let horizontalBatch = MatchResolution.scan(pieces, swapping: (shared + 5, shared))
+            XCTAssertEqual(horizontalBatch.lines, [horizontal])
+            XCTAssertEqual(horizontalBatch.coins, 15)
+            let verticalBatch = MatchResolution.scan(pieces, swapping: (shared + 1, shared))
+            XCTAssertEqual(verticalBatch.lines, [vertical])
+            XCTAssertEqual(verticalBatch.coins, 12)
         }
     }
 
@@ -63,14 +62,4 @@ final class MatchRewardTests: XCTestCase {
         XCTAssertEqual(batch.coins, 15)
     }
 
-    func testIntersectionUsesHighestRateForSharedGemOnce() {
-        var pieces = (0..<15).map { BoardPiece.rock(Rock(id: $0, seed: UInt64($0))) }
-        let c = PopulationConfiguration.standard
-        for index in [1, 5, 6, 7, 11] {
-            let vertical = [1, 6, 11].contains(index)
-            pieces[index] = .gem(Gem(id: index, seed: UInt64(index), grade: c.grades[vertical ? 2 : 0], color: c.colors[0], shape: c.shapes[2]))
-        }
-        // Vertical: 3 * 8. Horizontal-only endpoints: 2 * 5. Center isn't paid twice.
-        XCTAssertEqual(MatchResolution.scan(pieces).coins, 34)
-    }
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainMenuView: View {
     let onPlay: () -> Void
+    @State private var menuGem = PopulationGenerator.randomMenuGem()
 
     var body: some View {
         ViewThatFits(in: .vertical) {
@@ -10,7 +11,7 @@ struct MainMenuView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .safeAreaInset(edge: .bottom, alignment: .center, spacing: 0) {
-            Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0")")
+            Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.2.0")")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
@@ -21,11 +22,9 @@ struct MainMenuView: View {
     private var menu: some View {
         VStack(spacing: 40) {
             VStack(spacing: 22) {
-                Image(systemName: "diamond.fill")
-                    .font(.system(size: 52, weight: .light))
-                    .foregroundStyle(GameTheme.accent)
-                    .accessibilityHidden(true)
-                Text("Placeholder Game Title")
+                GemView(gem: menuGem)
+                    .frame(width: 72, height: 72)
+                Text("Gem Find & Collect")
                     .font(.system(.largeTitle, design: .default, weight: .bold))
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)

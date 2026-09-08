@@ -1,4 +1,4 @@
-# gem-collection-game
+# Gem Find & Collect
 
 iOS gem collection game
 

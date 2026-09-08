@@ -2,13 +2,7 @@ struct MatchBatch {
     let lines: [[Int]]
     var indices: Set<Int> { Set(lines.flatMap { $0 }) }
     let rewards: [MatchReward]
-    var coins: Int {
-        var rates: [Int: Int] = [:]
-        for reward in rewards {
-            for index in reward.indices { rates[index] = max(rates[index] ?? 0, reward.coinsPerGem) }
-        }
-        return rates.values.reduce(0, +)
-    }
+    var coins: Int { rewards.reduce(0) { $0 + $1.indices.count * $1.coinsPerGem } }
 }
 
 struct GravityResult {
@@ -18,7 +12,8 @@ struct GravityResult {
 }
 
 enum MatchResolution {
-    static func scan(_ pieces: [BoardPiece], columns: Int = BoardLayout.columns) -> MatchBatch {
+    static func scan(_ pieces: [BoardPiece], columns: Int = BoardLayout.columns,
+                     swapping: (Int, Int)? = nil, formedAfter previousPieces: [BoardPiece]? = nil) -> MatchBatch {
         guard columns > 0 else { return MatchBatch(lines: [], rewards: []) }
         var lines: [[Int]] = []
         for index in pieces.indices {
@@ -35,10 +30,38 @@ enum MatchResolution {
                     line.append(next)
                     next += step
                 }
-                if line.count >= 3 { lines.append(line) }
+                if line.count >= 3, swapping.map({ line.contains($0.0) || line.contains($0.1) }) ?? true {
+                    // Gravity must create a new line, not merely move an existing line intact.
+                    if let previousPieces,
+                       let start = previousPieces.firstIndex(where: { $0.id == pieces[line[0]].id }) {
+                        let unchanged = line.enumerated().allSatisfy { offset, index in
+                            let previous = start + offset * step
+                            return previousPieces.indices.contains(previous) &&
+                                (step != 1 || previous / columns == start / columns) &&
+                                previousPieces[previous].id == pieces[index].id
+                        }
+                        if unchanged { continue }
+                    }
+                    lines.append(line)
+                }
             }
         }
-        return MatchBatch(lines: lines, rewards: lines.map { MatchReward(indices: $0, pieces: pieces) })
+        // The dragged gem's destination wins over a match made by the displaced piece.
+        // If dragging a rock (or the moved gem makes no line), use the other endpoint.
+        if let (_, target) = swapping {
+            let destinationLines = lines.filter { $0.contains(target) }
+            if !destinationLines.isEmpty { lines = destinationLines }
+        }
+        // Gesture direction breaks intersection ambiguity; it must not reject a sole valid line.
+        let preferred: [[Int]] = swapping.map { source, target in
+            let step = source / columns == target / columns ? columns : 1
+            return lines.filter { $0[1] - $0[0] == step }
+        } ?? []
+        let candidates = preferred.isEmpty ? lines : preferred
+        // Stable board-order tie break. Each collection consumes exactly one straight line.
+        let longest = candidates.reduce([Int]()) { $1.count > $0.count ? $1 : $0 }
+        let selected = longest.isEmpty ? [] : [longest]
+        return MatchBatch(lines: selected, rewards: selected.map { MatchReward(indices: $0, pieces: pieces) })
     }
 
     static func collapse(_ pieces: [BoardPiece], removing: Set<Int>, replacements: [BoardPiece],

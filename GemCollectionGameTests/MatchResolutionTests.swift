@@ -20,12 +20,101 @@ final class MatchResolutionTests: XCTestCase {
         XCTAssertEqual(batch.indices, Set(0..<5))
     }
 
-    func testCrossAwardsSharedGemOnlyOnce() {
+    func testCrossCollectsOnlyOneStraightLine() {
         var pieces = field()
         for index in [5, 6, 7, 1, 11] { pieces[index] = gem(index) }
         let batch = MatchResolution.scan(pieces)
-        XCTAssertEqual(batch.lines.count, 2)
-        XCTAssertEqual(batch.coins, 5)
+        XCTAssertEqual(batch.lines, [[1, 6, 11]])
+        XCTAssertEqual(batch.coins, 3)
+    }
+
+
+    func testGestureAxisWinsEvenWhenOtherArmIsLonger() {
+        var pieces = field()
+        for index in [5, 6, 7, 8, 9, 1, 11] { pieces[index] = gem(index) }
+        XCTAssertEqual(MatchResolution.scan(pieces, swapping: (7, 6)).lines, [[1, 6, 11]])
+        XCTAssertEqual(MatchResolution.scan(pieces, swapping: (11, 6)).lines, [[5, 6, 7, 8, 9]])
+    }
+
+    func testDestinationLineWinsEvenWhenDisplacedPieceMakesLongerLine() {
+        var pieces = field()
+        for index in [0, 5, 10, 1, 6, 11, 16] { pieces[index] = gem(index) }
+        XCTAssertEqual(MatchResolution.scan(pieces, swapping: (5, 6)).lines, [[1, 6, 11, 16]])
+        XCTAssertEqual(MatchResolution.scan(pieces, swapping: (6, 5)).lines, [[0, 5, 10]])
+    }
+
+    func testGravityDoesNotActivateAnExistingUnselectedLine() {
+        var pieces = field()
+        for index in [0, 1, 2, 20, 21, 22] { pieces[index] = gem(index) }
+        XCTAssertTrue(MatchResolution.scan(pieces, formedAfter: pieces).lines.isEmpty)
+        var after = pieces
+        after.swapAt(20, 25)
+        after.swapAt(21, 26)
+        after.swapAt(22, 27)
+        XCTAssertTrue(MatchResolution.scan(after, formedAfter: pieces).lines.isEmpty)
+    }
+
+    func testGravityCanFormANewLineButNeverCollectsItsWholeIntersection() {
+        var before = field()
+        for index in [0, 6, 12, 1, 11] { before[index] = gem(index) }
+        var after = before
+        after.swapAt(0, 5)
+        after.swapAt(12, 7)
+        let batch = MatchResolution.scan(after, formedAfter: before)
+        XCTAssertEqual(batch.lines, [[5, 6, 7]])
+        XCTAssertEqual(batch.indices.count, 3)
+    }
+
+    @MainActor
+    func testSavedIntentSurvivesReloadAtIntersection() async throws {
+        let suite = "SavedIntent.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        var pieces = field()
+        for index in [1, 5, 6, 7, 11] { pieces[index] = gem(index) }
+        let save = GameBoard.Save(seed: 1, configuration: .standard, pieces: pieces, pendingMatch: [5, 6, 7])
+        defaults.set(try JSONEncoder().encode(save), forKey: GameBoard.storageKey)
+        let board = GameBoard(defaults: defaults)
+        board.resolveIfNeeded()
+        for _ in 0..<50 {
+            if !board.collectedIDs.isEmpty { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
+        XCTAssertEqual(board.collectedIDs, [5, 6, 7])
+        board.regenerate()
+    }
+
+    @MainActor
+    func testDraggedOrangeLineCollectsBeforeUpperDisplacedRedLine() async throws {
+        let catalog = PopulationConfiguration.standard
+        for (source, target, expected) in [(6, 11, Set([10, 6, 12])), (11, 6, Set([5, 11, 7]))] {
+            let suite = "DestinationFirst.\(UUID().uuidString)"
+            let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+            defer { defaults.removePersistentDomain(forName: suite) }
+            var pieces = field()
+            for index in [5, 7, 11] { pieces[index] = gem(index) }
+            for index in [6, 10, 12] {
+                pieces[index] = .gem(Gem(id: index, seed: UInt64(index), grade: catalog.grades[0],
+                    color: catalog.colors[1], shape: catalog.shapes[0]))
+            }
+            XCTAssertFalse(MatchRules.hasMatch(in: pieces))
+            defaults.set(try JSONEncoder().encode(GameBoard.Save(seed: 1, configuration: .standard,
+                pieces: pieces)), forKey: GameBoard.storageKey)
+            let board = GameBoard(defaults: defaults)
+            XCTAssertTrue(board.swap(source, target))
+            let saved = try JSONDecoder().decode(GameBoard.Save.self,
+                from: XCTUnwrap(defaults.data(forKey: GameBoard.storageKey)))
+            XCTAssertEqual(saved.pendingMatch, target == 11 ? [10, 11, 12] : [5, 6, 7])
+            for _ in 0..<50 {
+                if !board.collectedIDs.isEmpty { break }
+                try await Task.sleep(nanoseconds: 10_000_000)
+            }
+            XCTAssertEqual(board.collectedIDs, expected)
+            // The opposite line still exists until the first collection's animation completes.
+            XCTAssertEqual(board.pieces.count, pieces.count)
+            XCTAssertEqual(board.coins, 0)
+            board.regenerate()
+        }
     }
 
     func testGravityPreservesColumnOrderAndRefillsOnlyVacancies() {

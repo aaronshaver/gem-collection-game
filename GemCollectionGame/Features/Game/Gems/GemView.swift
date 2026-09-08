@@ -17,7 +17,8 @@ struct GemView: View {
             }
             func color(light: Double = 0, alpha: Double = 1) -> Color {
                 func channel(_ value: Double) -> Double {
-                    light >= 0 ? value + (1 - value) * light : value * (1 + light)
+                    let lit = light >= 0 ? value + (1 - value) * light : value * (1 + light)
+                    return lit * (gem.grade.id == "cracked" ? 0.88 : 1)
                 }
                 return Color(red: channel(gem.color.red), green: channel(gem.color.green),
                              blue: channel(gem.color.blue), opacity: alpha)
@@ -83,6 +84,18 @@ struct GemView: View {
                 GemSparklesView(gem: gem, animated: animateSparkles)
             }
         }
+        .overlay {
+            if gem.shape.sides == 6 {
+                Canvas { context, size in
+                    context.draw(
+                        Text("6")
+                            .font(.system(size: size.width * 0.25, weight: .medium, design: .rounded))
+                            .foregroundColor(Color(white: 0.8).opacity(0.5)),
+                        at: CGPoint(x: size.width * 0.5, y: size.height * 0.45))
+                }.allowsHitTesting(false)
+            }
+        }
+        .scaleEffect(gem.grade.id == "shiny" ? 1.05 : gem.grade.id == "cracked" ? 0.90 : 1)
         .accessibilityHidden(true)
     }
 }

@@ -9,9 +9,9 @@ struct SparkleTiming {
 
     init(seed: UInt64, index: Int) {
         let random = GKMersenneTwisterRandomSource(seed: seed &+ UInt64(index) &* 0x9E3779B97F4A7C15)
-        period = 2.0 + Double(random.nextUniform()) * 2.0
+        period = 1.5 + Double(random.nextUniform()) * 1.5
         phase = Double(random.nextUniform())
-        activeFraction = 0.35 + Double(random.nextUniform()) * 0.30
+        activeFraction = 0.60 + Double(random.nextUniform()) * 0.25
     }
 
     func brightness(at time: TimeInterval) -> Double {

@@ -18,7 +18,9 @@ enum GemCracks {
         func edgePoint(_ edge: Int) -> SurfacePoint {
             mix(vertices[edge % sides], vertices[(edge + 1) % sides], 0.12 + unit() * 0.76)
         }
-        let count = 1 + min(maximumFractures - 1, Int(unit() * Double(maximumFractures)))
+        let baseCount = 1 + min(maximumFractures - 1, Int(unit() * Double(maximumFractures)))
+        let extra = Double(baseCount) * 0.20
+        let count = baseCount + Int(extra) + (unit() < extra - floor(extra) ? 1 : 0)
         var paths: [[SurfacePoint]] = []
         for _ in 0..<count {
             let edge = min(sides - 1, Int(unit() * Double(sides)))

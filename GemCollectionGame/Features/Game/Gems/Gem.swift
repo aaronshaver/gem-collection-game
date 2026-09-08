@@ -20,7 +20,7 @@ struct Gem: Identifiable, Codable, Equatable {
         self.grade = grade
         self.color = color
         self.shape = shape
-        generationVersion = 4
+        generationVersion = 5
         let random = GKMersenneTwisterRandomSource(seed: seed)
         func unit() -> Double { Double(random.nextUniform()) }
         let orientation = unit() * Double.pi * 2

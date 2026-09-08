@@ -35,7 +35,7 @@ struct GemSparklesView: View {
                 guard brightness > 0.001 else { continue }
                 let center = CGPoint(x: sparkle.x * size.width, y: (sparkle.y * 0.86 + 0.02) * size.height)
                 let storedSize = gem.sparkleSizes.flatMap { index < $0.count ? $0[index] : nil }
-                let radius = size.width * (storedSize ?? (index == 0 ? 0.11 : 0.055)) * (0.65 + brightness * 0.35)
+                let radius = size.width * 1.3 * (storedSize ?? (index == 0 ? 0.11 : 0.055)) * (0.65 + brightness * 0.35)
                 var light = context
                 light.opacity = brightness
                 light.fill(Path(ellipseIn: CGRect(x: center.x - radius, y: center.y - radius,

@@ -41,6 +41,27 @@ final class MatchRulesTests: XCTestCase {
         XCTAssertFalse(SwapRules.canSwap(-1, 2, in: pieces))
     }
 
+    func testScreenshotRedGemCanSwapLeftIntoHorizontalMatch() {
+        var pieces = field()
+        // Screenshot's four visible columns, offset within the five-column board.
+        for index in [1, 2, 6, 7, 9] { pieces[index] = gem(index) }
+        XCTAssertTrue(SwapRules.canSwap(9, 8, in: pieces))
+        XCTAssertTrue(SwapRules.canSwap(8, 9, in: pieces))
+        pieces.swapAt(9, 8)
+        let batch = MatchResolution.scan(pieces, swapping: (9, 8))
+        XCTAssertEqual(batch.lines, [[6, 7, 8]])
+        XCTAssertEqual(batch.indices.count, 3)
+    }
+
+    func testVerticalSwapCanCompleteASoleVerticalLine() {
+        var pieces = field()
+        for index in [0, 5, 15] { pieces[index] = gem(index) }
+        XCTAssertTrue(SwapRules.canSwap(15, 10, in: pieces))
+        XCTAssertTrue(SwapRules.canSwap(10, 15, in: pieces))
+        pieces.swapAt(15, 10)
+        XCTAssertEqual(MatchResolution.scan(pieces, swapping: (15, 10)).lines, [[0, 5, 10]])
+    }
+
     func testUnrelatedMatchDoesNotAuthorizeSwap() {
         var pieces = field()
         for index in [0, 1, 2, 20] { pieces[index] = gem(index) }

@@ -5,7 +5,6 @@ enum SwapRules {
               MatchRules.color(of: pieces[source]) != MatchRules.color(of: pieces[target]) else { return false }
         var swapped = pieces
         swapped.swapAt(source, target)
-        return MatchRules.matches(at: source, in: swapped, columns: columns) ||
-               MatchRules.matches(at: target, in: swapped, columns: columns)
+        return !MatchResolution.scan(swapped, columns: columns, swapping: (source, target)).lines.isEmpty
     }
 }

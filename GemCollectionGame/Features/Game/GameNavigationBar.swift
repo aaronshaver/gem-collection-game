@@ -6,8 +6,7 @@ struct GameNavigationBar: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            tab("Collection", symbol: "square.grid.2x2", action: {})
-            tab("Achievements", symbol: "trophy", action: {})
+            tab("Collection", symbol: "trophy", action: {})
             tab("Toys", symbol: "wand.and.stars", action: {})
             tab("Main Menu", symbol: "house", action: onMainMenu)
         }

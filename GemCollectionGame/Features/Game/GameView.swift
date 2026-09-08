@@ -17,13 +17,6 @@ struct GameView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             GameNavigationBar(onMainMenu: onMainMenu)
         }
-        .overlay {
-            if let text = board.matchBannerText {
-                MatchBanner(text: text)
-                    .transition(.opacity)
-                    .allowsHitTesting(false)
-            }
-        }
         .onAppear { board.resolveIfNeeded() }
         .overlay {
             #if DEBUG

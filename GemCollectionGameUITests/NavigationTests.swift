@@ -5,7 +5,7 @@ final class NavigationTests: XCTestCase {
     func testMenuAndPlayNavigation() {
         let app = XCUIApplication()
         app.launch()
-        XCTAssertTrue(app.staticTexts["Placeholder Game Title"].exists)
+        XCTAssertTrue(app.staticTexts["Gem Find & Collect"].exists)
         XCTAssertFalse(app.buttons["Quit"].exists)
         for title in ["How to Play", "Settings"] {
             app.buttons[title].tap()
@@ -14,7 +14,7 @@ final class NavigationTests: XCTestCase {
         capture("Main Menu")
         app.buttons["Play"].tap()
         XCTAssertTrue(app.otherElements["gemBoard"].waitForExistence(timeout: 3))
-        for title in ["Collection", "Achievements", "Toys"] {
+        for title in ["Collection", "Toys"] {
             app.buttons[title].tap()
             XCTAssertTrue(app.otherElements["gemBoard"].exists)
         }
@@ -23,6 +23,7 @@ final class NavigationTests: XCTestCase {
         capture("Game Board")
         app.buttons["Main Menu"].tap()
         XCTAssertTrue(app.buttons["Play"].exists)
+        capture("Returned Main Menu")
     }
 
     @MainActor
