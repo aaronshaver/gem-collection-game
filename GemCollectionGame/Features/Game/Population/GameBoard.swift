@@ -11,9 +11,11 @@ final class GameBoard: ObservableObject {
         var fieldRulesVersion: Int? = 1
         /// nil supports older saves; [] means settled; otherwise the one line awaiting collection.
         var pendingMatch: [Int]? = nil
+        var collection: GemCollection? = nil
     }
     static let storageKey = "gameBoard.population.v1"
     @Published private(set) var pieces: [BoardPiece]
+    @Published private(set) var collection: GemCollection
     @Published private(set) var coins: Int
     @Published private(set) var isResolving = false
     @Published private(set) var collectedIDs: Set<Int> = []
@@ -29,6 +31,7 @@ final class GameBoard: ObservableObject {
         let generator = try! PopulationGenerator(configuration: configuration)
         let saved = defaults.data(forKey: Self.storageKey).flatMap { try? JSONDecoder().decode(Save.self, from: $0) }
         coins = saved?.coins ?? 0
+        collection = saved?.collection ?? GemCollection()
         seed = saved?.seed ?? UInt64.random(in: .min ... .max)
         if let saved, saved.configuration == configuration,
            saved.pieces.count == BoardLayout.cellCount,
@@ -48,6 +51,11 @@ final class GameBoard: ObservableObject {
             seed = fresh.seed
             pieces = fresh.pieces
         }
+        persist()
+    }
+
+    func markCollectionRead() {
+        collection.markRead()
         persist()
     }
 
@@ -102,6 +110,7 @@ final class GameBoard: ObservableObject {
                     self.pendingMatch = MatchResolution.scan(gravity.pieces, formedAfter: self.pieces).lines.first ?? []
                     self.spawnRows = gravity.spawnRows
                     withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
+                        self.collection.record(lines: batch.lines, pieces: self.pieces)
                         self.pieces = gravity.pieces
                         self.collectedIDs = []
                         self.coins += batch.coins
@@ -128,7 +137,7 @@ final class GameBoard: ObservableObject {
     }
 
     private func persist() {
-        let snapshot = Save(seed: seed, configuration: .standard, pieces: pieces, coins: coins, pendingMatch: pendingMatch)
+        let snapshot = Save(seed: seed, configuration: .standard, pieces: pieces, coins: coins, pendingMatch: pendingMatch, collection: collection)
         if let data = try? JSONEncoder().encode(snapshot) { defaults.set(data, forKey: Self.storageKey) }
     }
 }

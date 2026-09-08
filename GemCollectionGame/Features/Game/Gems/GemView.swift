@@ -3,6 +3,7 @@ import SwiftUI
 struct GemView: View {
     let gem: Gem
     var animateSparkles = true
+    var showSideLabel = true
 
     var body: some View {
         Canvas { context, size in
@@ -85,7 +86,7 @@ struct GemView: View {
             }
         }
         .overlay {
-            if gem.shape.sides == 6 {
+            if showSideLabel && gem.shape.sides == 6 {
                 Canvas { context, size in
                     context.draw(
                         Text("6")
