@@ -12,10 +12,13 @@ final class GameBoard: ObservableObject {
         /// nil supports older saves; [] means settled; otherwise the one line awaiting collection.
         var pendingMatch: [Int]? = nil
         var collection: GemCollection? = nil
+        var stash: GemStash? = nil
     }
     static let storageKey = "gameBoard.population.v1"
     @Published private(set) var pieces: [BoardPiece]
     @Published private(set) var collection: GemCollection
+    @Published private(set) var stash: GemStash
+    @Published private(set) var destructionIndex: Int?
     @Published private(set) var coins: Int
     @Published private(set) var isResolving = false
     @Published private(set) var collectedIDs: Set<Int> = []
@@ -32,6 +35,7 @@ final class GameBoard: ObservableObject {
         let saved = defaults.data(forKey: Self.storageKey).flatMap { try? JSONDecoder().decode(Save.self, from: $0) }
         coins = saved?.coins ?? 0
         collection = saved?.collection ?? GemCollection()
+        stash = saved?.stash ?? GemStash()
         seed = saved?.seed ?? UInt64.random(in: .min ... .max)
         if let saved, saved.configuration == configuration,
            saved.pieces.count == BoardLayout.cellCount,
@@ -63,6 +67,7 @@ final class GameBoard: ObservableObject {
         resolutionTask?.cancel()
         resolutionTask = nil
         isResolving = false
+        destructionIndex = nil
         pendingMatch = nil
         collectedIDs = []
         spawnRows = [:]
@@ -71,6 +76,46 @@ final class GameBoard: ObservableObject {
         seed = fresh.seed
         pieces = fresh.pieces
         persist()
+    }
+
+    private var nextPieceID: Int {
+        (pieces.map(\.id) + stash.slots.compactMap { $0?.id }).max().map { $0 + 1 } ?? 0
+    }
+
+    @discardableResult
+    func stashGem(at index: Int) -> Bool {
+        guard !isResolving, pieces.indices.contains(index),
+              case .gem(let gem) = pieces[index], stash.hasFreeSlot else { return false }
+        let rock = Rock(id: nextPieceID, seed: UInt64.random(in: .min ... .max))
+        guard stash.insert(gem) else { return false }
+        pieces[index] = .rock(rock)
+        pendingMatch = nil
+        persist()
+        return true
+    }
+
+    @discardableResult
+    func placeStashedGem(from slot: Int, at index: Int) -> Bool {
+        guard !isResolving, pieces.indices.contains(index),
+              stash.slots.indices.contains(slot), let gem = stash.slots[slot] else { return false }
+        let previous = pieces
+        _ = stash.remove(at: slot)
+        pieces[index] = .gem(gem)
+        pendingMatch = MatchResolution.scan(pieces, formedAfter: previous).lines.first ?? []
+        // Save the transfer atomically; the smoke is presentation only.
+        persist()
+        destructionIndex = index
+        isResolving = true
+        resolutionTask = Task { @MainActor [weak self] in
+            do { try await Task.sleep(nanoseconds: UInt64(DestructionEffect.duration * 1_000_000_000)) }
+            catch { return }
+            guard let self else { return }
+            self.destructionIndex = nil
+            self.isResolving = false
+            self.resolutionTask = nil
+            self.resolveIfNeeded()
+        }
+        return true
     }
 
     @discardableResult
@@ -103,7 +148,7 @@ final class GameBoard: ObservableObject {
                     self.collectedIDs = Set(batch.indices.map { self.pieces[$0].id })
                     try await Task.sleep(nanoseconds: UInt64(CollectionBurst.duration * 1_000_000_000))
                     let generator = try PopulationGenerator(configuration: .standard)
-                    let nextID = (self.pieces.map(\.id).max() ?? -1) + 1
+                    let nextID = self.nextPieceID
                     let incoming = generator.generate(seed: UInt64.random(in: .min ... .max),
                         count: batch.indices.count, startingID: nextID)
                     let gravity = MatchResolution.collapse(self.pieces, removing: batch.indices, replacements: incoming)
@@ -137,7 +182,7 @@ final class GameBoard: ObservableObject {
     }
 
     private func persist() {
-        let snapshot = Save(seed: seed, configuration: .standard, pieces: pieces, coins: coins, pendingMatch: pendingMatch, collection: collection)
+        let snapshot = Save(seed: seed, configuration: .standard, pieces: pieces, coins: coins, pendingMatch: pendingMatch, collection: collection, stash: stash)
         if let data = try? JSONEncoder().encode(snapshot) { defaults.set(data, forKey: Self.storageKey) }
     }
 }

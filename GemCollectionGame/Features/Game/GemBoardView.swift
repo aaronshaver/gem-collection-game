@@ -6,6 +6,8 @@ struct GemBoardView: View {
     let spawnRows: [Int: Int]
     let isResolving: Bool
     let onSwap: (Int, Int) -> Bool
+    var onTap: ((Int) -> Void)? = nil
+    var destructionIndex: Int? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var drag: BoardDrag?
     @GestureState private var isTouching = false
@@ -25,7 +27,6 @@ struct GemBoardView: View {
             }
             .frame(width: layout.width, height: layout.height)
             .coordinateSpace(name: "rockBoard")
-            .clipped()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: geometry.size) { _ in drag = nil }
         }
@@ -47,7 +48,9 @@ struct GemBoardView: View {
         let scale: CGFloat = lifted && !reduceMotion ? 1.07 : 1
         let layer: Double = drag?.source == index ? 2 : (drag?.target == index ? 1 : 0)
         return ZStack {
-            if collected, case .gem(let gem) = pieces[index] {
+            if destructionIndex == index {
+                DestructionEffect()
+            } else if collected, case .gem(let gem) = pieces[index] {
                 CollectionBurst(gem: gem)
             } else {
                 pieceArtwork(pieces[index])
@@ -60,13 +63,14 @@ struct GemBoardView: View {
             .accessibilityElement(children: .ignore)
             .accessibilityHidden(false)
             .accessibilityLabel(label)
-            .accessibilityHint("Drag to form a line of three matching colors. Other swaps spring back.")
+            .accessibilityHint(onTap != nil ? "Tap to choose this space." : "Drag to form a line of three matching colors. Other swaps spring back.")
+            .accessibilityAction(named: Text("Choose space")) { onTap?(index) }
             .accessibilityIdentifier("\(pieces[index].isRock ? "rock" : "gem")-\(index)")
             .offset(offset(for: index))
             .offset(y: CGFloat((spawnRows[pieces[index].id] ?? row) - row) * layout.cellSize)
             .position(x: (CGFloat(column) + 0.5) * layout.cellSize,
                       y: (CGFloat(row) + 0.5) * layout.cellSize)
-            .zIndex(collected ? 3 : layer)
+            .zIndex(collected || destructionIndex == index ? 3 : layer)
             .gesture(rockGesture(index: index, cellSize: layout.cellSize))
             .allowsHitTesting(!isResolving)
     }
@@ -82,8 +86,16 @@ struct GemBoardView: View {
     private func rockGesture(index: Int, cellSize: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .named("rockBoard"))
             .updating($isTouching) { _, touching, _ in touching = true }
-            .onChanged { value in updateDrag(index: index, translation: value.translation, startLocation: value.startLocation, cellSize: cellSize) }
-            .onEnded { _ in finishDrag() }
+            .onChanged { value in
+                guard onTap == nil else { return }
+                updateDrag(index: index, translation: value.translation, startLocation: value.startLocation, cellSize: cellSize)
+            }
+            .onEnded { value in
+                if !isResolving, let onTap, abs(value.translation.width) < 12, abs(value.translation.height) < 12 {
+                    onTap(index)
+                }
+                finishDrag()
+            }
     }
 
     private func updateDrag(index: Int, translation: CGSize, startLocation: CGPoint, cellSize: CGFloat) {

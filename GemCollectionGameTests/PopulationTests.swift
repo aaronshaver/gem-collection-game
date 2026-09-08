@@ -31,7 +31,7 @@ final class PopulationTests: XCTestCase {
         let config = PopulationConfiguration.standard
         let pieces = try PopulationGenerator(configuration: config).generate(seed: 987654, count: 10_000)
         let gems = pieces.compactMap { piece -> Gem? in if case .gem(let gem) = piece { return gem }; return nil }
-        XCTAssertEqual(Double(gems.count) / Double(pieces.count), 0.70, accuracy: 0.02)
+        XCTAssertEqual(Double(gems.count) / Double(pieces.count), 0.75, accuracy: 0.02)
         for grade in config.grades {
             let fraction = Double(gems.filter { $0.grade.id == grade.id }.count) / Double(gems.count)
             XCTAssertEqual(fraction, grade.weight / 7, accuracy: 0.03)

@@ -1,0 +1,75 @@
+import XCTest
+
+final class StashNavigationTests: XCTestCase {
+    @MainActor
+    func testStashRoundTripAndCancellation() throws {
+        let app = XCUIApplication()
+        app.launch()
+        app.buttons["Play"].tap()
+        let board = app.otherElements["gemBoard"]
+        XCTAssertTrue(board.waitForExistence(timeout: 3))
+        app.buttons["Stash"].tap()
+        XCTAssertTrue(app.buttons["Stash"].isSelected)
+        XCTAssertTrue(app.buttons["Close stash"].exists)
+        XCTAssertFalse(app.buttons["Put Gem on Board"].isEnabled)
+        capture("Empty Stash")
+        app.buttons["Add Gem to Stash"].tap()
+        XCTAssertTrue(board.exists)
+        XCTAssertTrue(app.buttons["Stash"].isSelected)
+        let rock = app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH 'rock-'")).firstMatch
+        XCTAssertTrue(rock.exists)
+        rock.tap()
+        XCTAssertTrue(board.exists)
+        XCTAssertFalse(app.buttons["Close stash"].exists)
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons["Close stash"].exists)
+        app.buttons["Add Gem to Stash"].tap()
+        let gem = app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH 'gem-'")).firstMatch
+        XCTAssertTrue(gem.exists)
+        let gemLabel = gem.label.components(separatedBy: ", row")[0]
+        gem.tap()
+        XCTAssertTrue(app.buttons["Close stash"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["Add Gem to Stash"].isEnabled)
+        XCTAssertTrue(app.buttons["Put Gem on Board"].isEnabled)
+        XCTAssertEqual(app.buttons["stash-slot-0"].label, gemLabel)
+        capture("Filled Stash")
+        app.buttons["Close stash"].tap()
+        XCTAssertFalse(app.buttons["Stash"].isSelected)
+        app.terminate()
+        app.launch()
+        app.buttons["Play"].tap()
+        app.buttons["Stash"].tap()
+        XCTAssertEqual(app.buttons["stash-slot-0"].label, gemLabel)
+        app.buttons["Put Gem on Board"].tap()
+        XCTAssertTrue(app.staticTexts["Choose a gem to place on the board"].firstMatch.exists)
+        app.buttons["stash-slot-0"].tap()
+        XCTAssertTrue(board.exists)
+        XCTAssertTrue(app.staticTexts["Pick a location"].exists)
+        app.buttons["Cancel"].tap()
+        XCTAssertEqual(app.buttons["stash-slot-0"].label, gemLabel)
+        app.buttons["Put Gem on Board"].tap()
+        app.buttons["stash-slot-0"].tap()
+        let destination = app.otherElements.matching(NSPredicate(format: "identifier BEGINSWITH 'rock-'")).firstMatch
+        let index = try XCTUnwrap(destination.identifier.split(separator: "-").last)
+        destination.tap()
+        let settled = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "selected == false"), object: app.buttons["Stash"])
+        XCTAssertEqual(XCTWaiter.wait(for: [settled], timeout: 4), .completed)
+        XCTAssertTrue(app.otherElements["gem-\(index)"].exists)
+        capture("Placed Stash Gem")
+        app.buttons["Stash"].tap()
+        XCTAssertFalse(app.buttons["Put Gem on Board"].isEnabled)
+        XCTAssertTrue(app.buttons["Add Gem to Stash"].isEnabled)
+        app.buttons["Close stash"].tap()
+        app.buttons["Tools"].tap()
+        XCTAssertTrue(board.exists)
+    }
+
+    @MainActor
+    private func capture(_ name: String) {
+        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        attachment.name = name
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+}
