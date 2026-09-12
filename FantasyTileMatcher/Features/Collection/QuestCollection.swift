@@ -21,5 +21,22 @@ struct QuestCollection: Codable, Equatable {
         return true
     }
 
+    #if DEBUG
+    @discardableResult
+    mutating func addRandomCompletions<R: RandomNumberGenerator>(using random: inout R) -> Int {
+        let total = Adventurer.all.count
+        let amount = Int.random(in: (total * 5 / 100)...(total * 30 / 100), using: &random)
+        let remaining = Adventurer.all.filter { !completed.contains($0) }
+        let additions = remaining.shuffled(using: &random).prefix(amount)
+        guard !additions.isEmpty else { return 0 }
+        completed.formUnion(additions)
+        hasUnread = true
+        if let current, completed.contains(current) {
+            self.current = Adventurer.all.filter { !completed.contains($0) }.randomElement(using: &random)
+        }
+        return additions.count
+    }
+    #endif
+
     mutating func markRead() { hasUnread = false }
 }

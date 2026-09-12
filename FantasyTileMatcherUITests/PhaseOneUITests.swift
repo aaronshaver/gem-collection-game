@@ -10,14 +10,14 @@ final class PhaseOneUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Fantasy Tile Matcher"].exists)
         XCTAssertTrue(app.buttons["Tutorial"].exists)
         XCTAssertTrue(app.staticTexts["© 2026 Aaron Shaver"].exists)
-        XCTAssertTrue(app.staticTexts["Version 0.3.1"].exists)
+        XCTAssertTrue(app.staticTexts["Version 0.3.2"].exists)
         capture("Main menu")
         app.buttons["Play"].tap()
         XCTAssertTrue(app.otherElements["tileBoard"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.otherElements["tile-14"].exists)
         XCTAssertFalse(app.otherElements["tile-15"].exists)
         XCTAssertFalse(app.buttons["Stash"].exists)
-        XCTAssertEqual(app.staticTexts["Version 0.3.1"].exists, false)
+        XCTAssertEqual(app.staticTexts["Version 0.3.2"].exists, false)
         capture("Three by five board")
         XCTAssertTrue(app.buttons["Upgrades"].exists)
         XCTAssertFalse(app.buttons["Reset All"].exists)
@@ -29,21 +29,34 @@ final class PhaseOneUITests: XCTestCase {
         source.press(forDuration: 0.1, thenDragTo: target)
         XCTAssertTrue(app.otherElements["tileBoard"].exists)
         XCTAssertTrue(target.label.hasPrefix(sourceLabel))
+        app.buttons["Dev"].tap()
+        Thread.sleep(forTimeInterval: 0.3)
+        app.buttons["addRandomCompletion"].tap()
         app.buttons["Quests"].tap()
         XCTAssertTrue(app.otherElements["currentQuest"].exists)
         XCTAssertTrue(app.staticTexts["Completed Quests"].exists)
-        for race in ["Cat", "Dwarf", "Elf", "Fairy", "Goblin", "Human", "Lizard", "Orc"] {
-            XCTAssertTrue(app.buttons["quests-race-\(race)"].exists)
-        }
-        capture("Current Quest and races")
-        app.buttons["quests-race-Human"].tap()
+        capture("Current Quest and progress")
+        let human = app.buttons["quest-progress-0-Human"]
+        scrollTo(human, in: app)
+        XCTAssertTrue(human.isHittable)
+        XCTAssertTrue((human.value as? String)?.contains("of 420") == true)
+        human.tap()
         XCTAssertTrue(app.buttons["Back to Quests"].exists)
         app.buttons["Back to Quests"].tap()
+        for (id, denominator) in [("1-Wizard", "336"), ("2-Wisdom", "560"), ("3-Swamp", "480")] {
+            let row = app.buttons["quest-progress-" + id]
+            scrollTo(row, in: app)
+            XCTAssertTrue(row.isHittable)
+            XCTAssertTrue((row.value as? String)?.contains("of " + denominator) == true)
+            capture(id)
+        }
         app.buttons["Close Quests"].tap()
         app.buttons["Dev"].tap()
         Thread.sleep(forTimeInterval: 0.3)
         app.buttons["resetAll"].tap()
         XCTAssertTrue(app.alerts.buttons["Cancel"].waitForExistence(timeout: 3))
+        XCTAssertEqual(app.alerts.staticTexts.count, 1)
+        capture("Reset confirmation")
         app.alerts.buttons["Cancel"].tap()
         XCTAssertEqual(app.otherElements["tile-0"].exists, true)
         app.buttons["Dev"].tap()
@@ -59,6 +72,14 @@ final class PhaseOneUITests: XCTestCase {
         app.buttons["regenerateField"].tap()
         XCTAssertTrue(app.otherElements["tileBoard"].exists)
         capture("Reset board")
+    }
+
+    @MainActor
+    private func scrollTo(_ element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<12 {
+            if element.exists && element.isHittable { return }
+            app.scrollViews.firstMatch.swipeUp()
+        }
     }
 
     @MainActor

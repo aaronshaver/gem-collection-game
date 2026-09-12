@@ -20,6 +20,7 @@ struct GameView: View {
             if showingDev {
                 Color.black.opacity(0.4).onTapGesture { closeDev() }.accessibilityHidden(true)
                 DevMenu(isResolving: board.isResolving, onClose: closeDev,
+                    onAddRandomCompletion: { closeDev(); board.addRandomCompletion() },
                     onReset: { closeDev(); showingResetConfirmation = true },
                     onRefresh: {
                         closeDev()
@@ -54,8 +55,6 @@ struct GameView: View {
                 fieldID = UUID()
             }
             Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This clears all gold and completed Quests, refreshes the board, and assigns a new Quest.")
         }
         .onAppear { board.resolveIfNeeded() }
         .onDisappear { closeDev() }

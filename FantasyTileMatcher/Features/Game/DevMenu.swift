@@ -4,6 +4,7 @@ import SwiftUI
 struct DevMenu: View {
     let isResolving: Bool
     let onClose: () -> Void
+    let onAddRandomCompletion: () -> Void
     let onReset: () -> Void
     let onRefresh: () -> Void
     let onPreviewDiscovery: () -> Void
@@ -33,6 +34,12 @@ struct DevMenu: View {
                     .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
             }
             .accessibilityIdentifier("previewDiscovery")
+            .disabled(isResolving)
+            Button(action: onAddRandomCompletion) {
+                Label("Add random completion", systemImage: "plus.circle")
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            }
+            .accessibilityIdentifier("addRandomCompletion")
             .disabled(isResolving)
             Button(role: .destructive, action: onReset) {
                 Label("Reset All", systemImage: "arrow.counterclockwise")

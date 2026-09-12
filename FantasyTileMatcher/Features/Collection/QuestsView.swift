@@ -3,18 +3,18 @@ import SwiftUI
 struct QuestsView: View {
     let collection: QuestCollection
     let onClose: () -> Void
-    @State private var selectedRace: Race?
+    @State private var selectedProgress: QuestProgress?
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                if selectedRace != nil {
-                    iconButton("chevron.left", label: "Back to Quests") { selectedRace = nil }
+                if selectedProgress != nil {
+                    iconButton("chevron.left", label: "Back to Quests") { selectedProgress = nil }
                 } else {
                     Image(systemName: "trophy.fill").foregroundStyle(.mint).frame(width: 44, height: 44)
                 }
                 Spacer()
-                Text(selectedRace?.rawValue ?? "Quests")
+                Text(selectedProgress?.name ?? "Quests")
                 Spacer()
                 iconButton("xmark", label: "Close Quests", action: onClose)
             }
@@ -22,7 +22,7 @@ struct QuestsView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             ScrollView {
-                if let race = selectedRace { variants(race) } else { overview }
+                if let progress = selectedProgress { variants(progress) } else { overview }
             }
         }
         .background(GameBackground())
@@ -54,30 +54,27 @@ struct QuestsView: View {
             }
             Divider().overlay(.white.opacity(0.08))
             Text("Completed Quests").font(.headline).accessibilityAddTraits(.isHeader)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 14)], spacing: 14) {
-                ForEach(Race.allCases) { race in
-                    Button { selectedRace = race } label: {
-                        VStack(spacing: 8) {
-                            Text(race.rawValue).font(.headline)
-                            Text("\(collection.count(for: race)) of \(Adventurer.combinationsPerRace)")
-                                .font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
+            ForEach(Attribute.allCases, id: \.rawValue) { attribute in
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(attribute.title).font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                    LazyVStack(spacing: 6) {
+                        ForEach(collection.progress(for: attribute)) { progress in
+                            Button { selectedProgress = progress } label: {
+                                QuestProgressRow(progress: progress)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("quest-progress-\(progress.id)")
                         }
-                        .padding(.vertical, 20)
-                        .frame(maxWidth: .infinity)
-                        .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 22))
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(race.rawValue + " Quests")
-                    .accessibilityIdentifier("quests-race-\(race.rawValue)")
                 }
             }
         }.padding(20)
     }
 
     // Keep the existing drill-down's grouped trio/checkmark presentation with the new tile data.
-    private func variants(_ race: Race) -> some View {
+    private func variants(_ progress: QuestProgress) -> some View {
         LazyVStack(spacing: 12) {
-            ForEach(Adventurer.all.filter { $0.race == race }) { adventurer in
+            ForEach(Adventurer.all.filter { progress.attribute.value(in: $0) == progress.name }) { adventurer in
                 let found = collection.completed.contains(adventurer)
                 HStack {
                     HStack(spacing: 8) {

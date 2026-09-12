@@ -54,6 +54,13 @@ final class GameBoard: ObservableObject {
 
     #if DEBUG
     func previewDiscovery() { discoveryEvent += 1 }
+
+    func addRandomCompletion() {
+        guard !isResolving else { return }
+        var random = SystemRandomNumberGenerator()
+        collection.addRandomCompletions(using: &random)
+        persist()
+    }
     #endif
 
     private func cancelResolution() {
