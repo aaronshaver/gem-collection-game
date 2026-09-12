@@ -13,6 +13,12 @@ final class GameBoardTests: XCTestCase {
     override func tearDown() async throws { defaults.removePersistentDomain(forName: suite) }
 
     func testNonmatchingSwapPersistenceAndRefreshPreserveProgress() throws {
+        // This test needs a quiet board to isolate persistence of a nonmatching swap.
+        let pieces = try XCTUnwrap((0..<100).lazy.map {
+            PopulationGenerator().freshField(seed: UInt64($0))
+        }.first { !MatchRules.hasMatch(in: $0) })
+        defaults.set(try JSONEncoder().encode(GameBoard.Save(pieces: pieces, gold: 0,
+                     collection: QuestCollection())), forKey: GameBoard.storageKey)
         let board = GameBoard(defaults: defaults)
         let original = board.pieces
         let pair = try XCTUnwrap((0..<15).flatMap { source in
@@ -129,7 +135,6 @@ final class GameBoardTests: XCTestCase {
         XCTAssertEqual(board.gold, 123)
         XCTAssertEqual(board.collection, collection)
         XCTAssertEqual(board.pieces.count, 15)
-        XCTAssertFalse(MatchRules.hasMatch(in: board.pieces))
         XCTAssertEqual(GameBoard(defaults: defaults).pieces, board.pieces)
     }
 

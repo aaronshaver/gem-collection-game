@@ -10,11 +10,11 @@ struct GameNavigationBar: View {
 
     var body: some View {
         HStack(spacing: 4) {
+            tab("Main Menu", symbol: "house", action: onMainMenu)
             tab(
                 "Quests", symbol: questsSelected ? "trophy.fill" : "trophy",
                 selected: questsSelected, unread: hasUnread, action: onQuests)
             tab("Upgrades", symbol: "arrow.up.circle.fill", action: {})
-            tab("Main Menu", symbol: "house", action: onMainMenu)
             #if DEBUG
             tab("Dev", symbol: "slider.horizontal.3", selected: devSelected, action: onDev)
             #endif

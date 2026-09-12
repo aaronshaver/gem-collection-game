@@ -10,16 +10,19 @@ final class PhaseOneUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Fantasy Tile Matcher"].exists)
         XCTAssertTrue(app.buttons["Tutorial"].exists)
         XCTAssertTrue(app.staticTexts["© 2026 Aaron Shaver"].exists)
-        XCTAssertTrue(app.staticTexts["Version 0.3.2"].exists)
+        XCTAssertTrue(app.staticTexts["Version 0.3.4"].exists)
         capture("Main menu")
         app.buttons["Play"].tap()
         XCTAssertTrue(app.otherElements["tileBoard"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.otherElements["tile-14"].exists)
         XCTAssertFalse(app.otherElements["tile-15"].exists)
         XCTAssertFalse(app.buttons["Stash"].exists)
-        XCTAssertEqual(app.staticTexts["Version 0.3.2"].exists, false)
+        XCTAssertEqual(app.staticTexts["Version 0.3.4"].exists, false)
         capture("Three by five board")
         XCTAssertTrue(app.buttons["Upgrades"].exists)
+        XCTAssertLessThan(app.buttons["Main Menu"].frame.minX, app.buttons["Quests"].frame.minX)
+        XCTAssertLessThan(app.buttons["Main Menu"].frame.minX, app.buttons["Upgrades"].frame.minX)
+        XCTAssertLessThan(app.buttons["Main Menu"].frame.minX, app.buttons["Dev"].frame.minX)
         XCTAssertFalse(app.buttons["Reset All"].exists)
         XCTAssertLessThanOrEqual(app.buttons["Dev"].frame.height, 48)
         // The fixture makes this first adjacent swap nonmatching. It must remain swapped.
@@ -72,6 +75,27 @@ final class PhaseOneUITests: XCTestCase {
         app.buttons["regenerateField"].tap()
         XCTAssertTrue(app.otherElements["tileBoard"].exists)
         capture("Reset board")
+    }
+
+    @MainActor
+    func testCompletedQuestsMessageAndPersistentGlow() {
+        let app = XCUIApplication()
+        app.launchEnvironment["FANTASY_UI_TEST_SUITE"] = "FantasyUITests.\(UUID())"
+        app.launchArguments = ["--reset-ui-test-state", "--all-quests-complete"]
+        app.launch()
+        app.buttons["Play"].tap()
+        app.buttons["Quests"].tap()
+        XCTAssertTrue(app.staticTexts["None. All quests completed! You truly are amazing. The king and everyone in the kingdom thanks you for saving them from evil."].exists)
+        let human = app.buttons["quest-progress-0-Human"]
+        scrollTo(human, in: app)
+        XCTAssertEqual(human.value as? String, "420 of 420 Quests, 100 percent")
+        capture("Completed bars glow")
+        Thread.sleep(forTimeInterval: 6)
+        capture("Completed bars glow after multiple cycles")
+        human.tap()
+        app.buttons["Back to Quests"].tap()
+        scrollTo(app.buttons["quest-progress-0-Human"], in: app)
+        capture("Completed bars glow after returning")
     }
 
     @MainActor

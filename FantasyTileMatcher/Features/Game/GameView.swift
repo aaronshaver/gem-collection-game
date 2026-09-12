@@ -57,6 +57,7 @@ struct GameView: View {
             Button("Cancel", role: .cancel) {}
         }
         .onAppear { board.resolveIfNeeded() }
+        .onChange(of: fieldID) { _ in board.resolveIfNeeded() }
         .onDisappear { closeDev() }
         .task(id: devPreviewRequest) {
             guard devPreviewRequest != nil else { return }
@@ -77,8 +78,6 @@ struct GameView: View {
                 TileBoardView(pieces: board.pieces, collectedIDs: board.collectedIDs,
                               spawnRows: board.spawnRows, isResolving: board.isResolving, onSwap: board.swap)
                     .id(fieldID)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
                     .background(SoilBackground())
                     .modifier(DiscoveryCelebration(event: board.discoveryEvent))
             }

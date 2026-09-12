@@ -15,10 +15,10 @@ struct BoardDrag: Equatable {
         self.touchStartOffset = touchStartOffset
     }
 
-    mutating func update(translation: CGSize, cellSize: CGFloat) {
-        guard !thresholdReached, cellSize > 0 else { return }
+    mutating func update(translation: CGSize, spacing: CGSize) {
+        guard !thresholdReached, spacing.width > 0, spacing.height > 0 else { return }
         if direction == .zero {
-            guard max(abs(translation.width), abs(translation.height)) > cellSize * 0.10 else { return }
+            guard max(abs(translation.width), abs(translation.height)) > min(spacing.width, spacing.height) * 0.10 else { return }
             if abs(translation.width) >= abs(translation.height) {
                 direction.width = translation.width > 0 ? 1 : -1
             } else {
@@ -30,6 +30,8 @@ struct BoardDrag: Equatable {
                 target = row * BoardLayout.columns + column
             }
         }
+        let cellSize = direction.width != 0 ? spacing.width : spacing.height
+        let crossAxisSize = direction.width != 0 ? spacing.height : spacing.width
         let distance = max(0, translation.width * direction.width + translation.height * direction.height)
         let progress = min(distance / cellSize, 1)
         let travel = target == nil ? cellSize * 0.18 * progress : min(distance, cellSize)
@@ -45,7 +47,7 @@ struct BoardDrag: Equatable {
         let fingerY = touchStartOffset.height + translation.height
         let fingerProgress = fingerX * direction.width + fingerY * direction.height
         let crossAxis = abs(fingerX * direction.height + fingerY * direction.width)
-        if target != nil, fingerProgress >= cellSize * 0.70, crossAxis <= cellSize * 0.50 {
+        if target != nil, fingerProgress >= cellSize * 0.70, crossAxis <= crossAxisSize * 0.50 {
             thresholdReached = true
         }
     }

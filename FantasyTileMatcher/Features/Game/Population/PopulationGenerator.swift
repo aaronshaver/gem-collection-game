@@ -12,13 +12,8 @@ struct PopulationGenerator {
         }
     }
 
-    /// All attributes use equal chances. Only initial boards are rerolled to avoid free starting matches.
+    /// Every attribute is drawn independently, including boards with starting matches.
     func freshField(seed: UInt64, startingID: Int = 0) -> [Tile] {
-        var candidateSeed = seed
-        while true {
-            let pieces = generate(seed: candidateSeed, count: BoardLayout.cellCount, startingID: startingID)
-            if !MatchRules.hasMatch(in: pieces) { return pieces }
-            candidateSeed &+= 1
-        }
+        generate(seed: seed, count: BoardLayout.cellCount, startingID: startingID)
     }
 }

@@ -15,12 +15,18 @@ enum UITestFixture {
             while true {
                 var swapped = pieces
                 swapped.swapAt(0, 1)
-                if !MatchRules.hasMatch(in: swapped) { break }
+                // Keep this UI fixture still while testing the first nonmatching drag.
+                if !MatchRules.hasMatch(in: pieces) && !MatchRules.hasMatch(in: swapped) { break }
                 seed += 1
                 pieces = PopulationGenerator().freshField(seed: seed)
             }
             let target = Adventurer(race: .human, adventurerClass: .wizard, ability: .wisdom, origin: .forest)
-            let save = GameBoard.Save(pieces: pieces, gold: 20, collection: QuestCollection(current: target))
+            var collection = QuestCollection(current: target)
+            if ProcessInfo.processInfo.arguments.contains("--all-quests-complete") {
+                var random = SystemRandomNumberGenerator()
+                while collection.current != nil { collection.addRandomCompletions(using: &random) }
+            }
+            let save = GameBoard.Save(pieces: pieces, gold: 20, collection: collection)
             defaults.set(try! JSONEncoder().encode(save), forKey: GameBoard.storageKey)
         }
         return defaults

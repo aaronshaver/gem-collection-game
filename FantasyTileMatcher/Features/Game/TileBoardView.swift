@@ -53,7 +53,6 @@ struct TileBoardView: View {
             }
         }
             .frame(width: layout.tileSize, height: layout.tileSize)
-            .frame(width: layout.cellSize, height: layout.cellSize)
             .contentShape(Rectangle())
             .accessibilityElement(children: .ignore)
             .accessibilityHidden(false)
@@ -65,37 +64,35 @@ struct TileBoardView: View {
             .accessibilityAction(named: Text("Swap down")) { _ = onSwap(index, index + BoardLayout.columns) }
             .accessibilityIdentifier("tile-\(index)")
             .offset(offset(for: index))
-            .offset(y: CGFloat((spawnRows[pieces[index].id] ?? row) - row) * layout.cellSize)
-            .position(x: (CGFloat(column) + 0.5) * layout.cellSize,
-                      y: (CGFloat(row) + 0.5) * layout.cellSize)
+            .offset(y: CGFloat((spawnRows[pieces[index].id] ?? row) - row) * layout.spacing.height)
+            .position(layout.center(at: index))
             .zIndex(collected ? 3 : layer)
-            .gesture(tileGesture(index: index, cellSize: layout.cellSize))
+            .gesture(tileGesture(index: index, layout: layout))
             .allowsHitTesting(!isResolving)
     }
 
-    private func tileGesture(index: Int, cellSize: CGFloat) -> some Gesture {
+    private func tileGesture(index: Int, layout: BoardLayout) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .named("tileBoard"))
             .updating($isTouching) { _, touching, _ in touching = true }
             .onChanged { value in
-                updateDrag(index: index, translation: value.translation, startLocation: value.startLocation, cellSize: cellSize)
+                updateDrag(index: index, translation: value.translation, startLocation: value.startLocation, layout: layout)
             }
             .onEnded { value in
                 finishDrag()
             }
     }
 
-    private func updateDrag(index: Int, translation: CGSize, startLocation: CGPoint, cellSize: CGFloat) {
+    private func updateDrag(index: Int, translation: CGSize, startLocation: CGPoint, layout: BoardLayout) {
         guard !isResolving else { return }
         if drag == nil {
-            let centerX = (CGFloat(index % BoardLayout.columns) + 0.5) * cellSize
-            let centerY = (CGFloat(index / BoardLayout.columns) + 0.5) * cellSize
-            let grabOffset = CGSize(width: startLocation.x - centerX, height: startLocation.y - centerY)
+            let center = layout.center(at: index)
+            let grabOffset = CGSize(width: startLocation.x - center.x, height: startLocation.y - center.y)
             withAnimation(.easeOut(duration: 0.10)) {
                 drag = BoardDrag(source: index, touchStartOffset: grabOffset)
             }
         }
         guard var current = drag, current.source == index, !current.thresholdReached else { return }
-        current.update(translation: translation, cellSize: cellSize)
+        current.update(translation: translation, spacing: layout.spacing)
         drag = current
         if current.thresholdReached {
             withAnimation(returnAnimation) {

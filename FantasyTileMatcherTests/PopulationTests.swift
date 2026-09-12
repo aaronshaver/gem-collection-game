@@ -17,12 +17,16 @@ final class PopulationTests: XCTestCase {
         }
     }
 
-    func testFreshBoardsHaveFifteenTilesAndNoFreeMatches() {
-        for seed in 0..<100 {
-            let pieces = PopulationGenerator().freshField(seed: UInt64(seed))
+    func testFreshBoardsPreserveUnfilteredRandomDrawsIncludingStartingMatches() {
+        let generator = PopulationGenerator()
+        var boardsWithMatches = 0
+        for seed in 0..<1000 {
+            let pieces = generator.freshField(seed: UInt64(seed), startingID: 100)
             XCTAssertEqual(pieces.count, 15)
-            XCTAssertFalse(MatchRules.hasMatch(in: pieces))
+            XCTAssertEqual(pieces, generator.generate(seed: UInt64(seed), count: 15, startingID: 100))
+            if MatchRules.hasMatch(in: pieces) { boardsWithMatches += 1 }
         }
+        XCTAssertGreaterThan(boardsWithMatches, 0)
     }
 
     func testMatchScanPerformance() {

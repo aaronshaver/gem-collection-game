@@ -50,7 +50,7 @@ struct QuestsView: View {
                 .accessibilityLabel("Current Quest: \(quest.label)")
                 .accessibilityIdentifier("currentQuest")
             } else {
-                Text("All Quests completed!").font(.title2.bold())
+                Text("None. All quests completed! You truly are amazing. The king and everyone in the kingdom thanks you for saving them from evil.").font(.title2.bold())
             }
             Divider().overlay(.white.opacity(0.08))
             Text("Completed Quests").font(.headline).accessibilityAddTraits(.isHeader)
