@@ -8,6 +8,9 @@ struct GameView: View {
     @State private var showingCollection = false
     @State private var stashMode: StashMode = .closed
     @State private var banner: String?
+    @State private var showingDebug = false
+    @State private var debugPreviewRequest: UUID?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private enum StashMode: Equatable {
         case closed, drawer, adding, choosing
@@ -26,8 +29,8 @@ struct GameView: View {
         ZStack(alignment: .bottom) {
             gameContent
                 .accessibilityElement(children: .contain)
-                .allowsHitTesting(!stashMode.showsDrawer)
-                .accessibilityHidden(stashMode.showsDrawer)
+                .allowsHitTesting(!stashMode.showsDrawer && !showingDebug)
+                .accessibilityHidden(stashMode.showsDrawer || showingDebug)
 
             if stashMode.showsDrawer {
                 Color.black.opacity(0.4)
@@ -36,6 +39,26 @@ struct GameView: View {
                 stashDrawer
                     .transition(.move(edge: .bottom))
             }
+            #if DEBUG
+            if showingDebug {
+                Color.black.opacity(0.4)
+                    .onTapGesture { closeDebug() }
+                    .accessibilityHidden(true)
+                DebugToolsDrawer(
+                    isResolving: board.isResolving,
+                    onClose: closeDebug,
+                    onRefresh: {
+                        closeDebug()
+                        fieldID = UUID()
+                        board.regenerate()
+                    },
+                    onPreviewDiscovery: {
+                        closeDebug()
+                        debugPreviewRequest = UUID()
+                    })
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom))
+            }
+            #endif
         }
         .overlay(alignment: .top) { selectionPrompt }
         .task(id: banner) {
@@ -46,41 +69,44 @@ struct GameView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             GameNavigationBar(
                 onMainMenu: {
+                    closeDebug()
                     closeStash()
                     onMainMenu()
                 },
                 onCollection: {
+                    closeDebug()
                     closeStash()
                     board.markCollectionRead()
                     showingCollection = true
                 },
                 onStash: {
+                    closeDebug()
                     showingCollection = false
                     if stashMode == .closed { stashMode = .drawer } else { closeStash() }
                 }, stashSelected: stashMode != .closed,
-                collectionSelected: showingCollection, hasUnread: board.collection.hasUnread)
+                collectionSelected: showingCollection, hasUnread: board.collection.hasUnread,
+                debugSelected: showingDebug,
+                onDebug: {
+                    debugPreviewRequest = nil
+                    closeStash()
+                    showingCollection = false
+                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.22)) {
+                        showingDebug.toggle()
+                    }
+                })
         }
         .onAppear { board.resolveIfNeeded() }
-        .onDisappear { closeStash() }
+        .onDisappear { closeStash(); closeDebug() }
         .onChange(of: board.destructionIndex) { index in
             if index == nil && stashMode == .destroying { closeStash() }
         }
-        .overlay {
+        .task(id: debugPreviewRequest) {
+            guard debugPreviewRequest != nil else { return }
+            do { try await Task.sleep(nanoseconds: 1_000_000_000) } catch { return }
             #if DEBUG
-                if !showingCollection && stashMode == .closed && !board.isResolving {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            DebugRefreshButton {
-                                fieldID = UUID()
-                                board.regenerate()
-                            }
-                        }
-                    }
-                    .ignoresSafeArea(edges: .bottom)
-                }
+            board.previewDiscovery()
             #endif
+            debugPreviewRequest = nil
         }
     }
 
@@ -191,6 +217,11 @@ struct GameView: View {
         board.cancelStashAction()
         stashMode = .closed
         banner = nil
+    }
+
+    private func closeDebug() {
+        debugPreviewRequest = nil
+        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.22)) { showingDebug = false }
     }
 
     private func showBanner(_ text: String) {

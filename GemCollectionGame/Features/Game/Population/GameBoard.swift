@@ -71,6 +71,12 @@ final class GameBoard: ObservableObject {
         persist()
     }
 
+    #if DEBUG
+    func previewDiscovery() {
+        discoveryEvent += 1
+    }
+    #endif
+
     func regenerate() {
         cancelStashAction()
         resolutionTask?.cancel()

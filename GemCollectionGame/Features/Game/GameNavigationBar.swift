@@ -7,6 +7,8 @@ struct GameNavigationBar: View {
     var stashSelected = false
     var collectionSelected = false
     var hasUnread = false
+    var debugSelected = false
+    var onDebug: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 4) {
@@ -18,6 +20,9 @@ struct GameNavigationBar: View {
                 selected: stashSelected, action: onStash)
             tab("Tools", symbol: "hammer.fill", action: {})
             tab("Main Menu", symbol: "house", action: onMainMenu)
+            #if DEBUG
+            tab("Debug", symbol: "ladybug", selected: debugSelected, action: onDebug)
+            #endif
         }
         .padding(.horizontal, 8)
         .padding(.top, 12)

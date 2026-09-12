@@ -38,6 +38,7 @@ final class MatchingSwapTests: XCTestCase {
                 add(capture)
                 return
             }
+            app.buttons["Debug"].tap()
             app.buttons["regenerateField"].tap()
         }
         XCTFail("No legal swap found in ten fresh fields")
