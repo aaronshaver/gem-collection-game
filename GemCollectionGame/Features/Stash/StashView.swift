@@ -4,6 +4,7 @@ struct StashView: View {
     let stash: GemStash
     let choosingGem: Bool
     let isResolving: Bool
+    let coins: Int
     let onClose: () -> Void
     let onAdd: () -> Void
     let onPut: () -> Void
@@ -26,18 +27,23 @@ struct StashView: View {
             }
             VStack(spacing: 10) {
                 Button(action: onAdd) {
-                    Label("Add Gem to Stash", systemImage: "plus.diamond")
-                        .frame(maxWidth: .infinity, minHeight: 36)
+                    actionLabel("Add Gem to Stash", symbol: "plus.diamond")
                 }
-                .disabled(!stash.hasFreeSlot || isResolving)
+                .accessibilityLabel("Add Gem to Stash")
+                .accessibilityValue("Costs \(GameBoard.stashCost) coins")
+                .disabled(!stash.hasFreeSlot || isResolving || choosingGem || coins < GameBoard.stashCost)
                 Button(action: onPut) {
-                    Label("Put Gem on Board", systemImage: "arrow.up.forward.square")
-                        .frame(maxWidth: .infinity, minHeight: 36)
+                    actionLabel("Put Gem on Board", symbol: "arrow.up.forward.square")
                 }
-                .disabled(stash.isEmpty || isResolving || choosingGem)
+                .accessibilityLabel("Put Gem on Board")
+                .accessibilityValue("Costs \(GameBoard.stashCost) coins")
+                .disabled(stash.isEmpty || isResolving || choosingGem || coins < GameBoard.stashCost)
             }
             .buttonStyle(.bordered)
             .tint(.mint)
+            Text(choosingGem ? "\(GameBoard.stashCost) coins paid · Close to refund" : "Each transfer costs \(GameBoard.stashCost) coins. Cancel to refund.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             HStack {
                 Text(
                     choosingGem
@@ -82,5 +88,14 @@ struct StashView: View {
         .background(GameBackground())
         .clipShape(RoundedRectangle(cornerRadius: 28))
         .accessibilityIdentifier("stashDrawer")
+    }
+
+    private func actionLabel(_ title: String, symbol: String) -> some View {
+        HStack {
+            Label(title, systemImage: symbol)
+            Spacer(minLength: 8)
+            CoinLabel(amount: GameBoard.stashCost)
+        }
+        .frame(maxWidth: .infinity, minHeight: 36)
     }
 }

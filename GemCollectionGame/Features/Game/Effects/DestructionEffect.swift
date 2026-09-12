@@ -3,7 +3,7 @@ import SwiftUI
 /// Shared by board actions: flying rock and dirt, followed by rolling charcoal smoke.
 /// Place in a cell-sized frame; the drawing surface extends beyond it for the debris.
 struct DestructionEffect: View {
-    static let duration = 1.1
+    static let duration = 0.55
     @State private var startedAt = Date()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -26,7 +26,7 @@ struct DestructionFrame: View {
     var body: some View {
         GeometryReader { geometry in
             Canvas { context, size in
-                let unit = size.width / 4
+                let unit = size.width / 4 * 0.60
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)
                 drawDirt(in: context, center: center, unit: unit)
                 drawSmoke(in: context, center: center, unit: unit)

@@ -1,5 +1,28 @@
 /// Color alone determines matches; grade and polygon shape do not matter.
 enum MatchRules {
+    /// Contiguous runs that qualify for a color/grade/shape collection entry.
+    static func exactRuns(in line: [Int], pieces: [BoardPiece]) -> [[Int]] {
+        var runs: [[Int]] = []
+        var current: [Int] = []
+        var previous: GemCombination?
+        for index in line {
+            let combination: GemCombination?
+            if pieces.indices.contains(index), case .gem(let gem) = pieces[index] {
+                combination = GemCombination(gem)
+            } else {
+                combination = nil
+            }
+            if combination == nil || combination != previous {
+                if current.count >= 3 { runs.append(current) }
+                current = []
+            }
+            if combination != nil { current.append(index) }
+            previous = combination
+        }
+        if current.count >= 3 { runs.append(current) }
+        return runs
+    }
+
     static func color(of piece: BoardPiece) -> String? {
         if case .gem(let gem) = piece { return gem.color.id }
         return nil

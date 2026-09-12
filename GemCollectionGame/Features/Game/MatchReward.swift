@@ -2,6 +2,11 @@ struct MatchReward {
     let indices: [Int]
     let coinsPerGem: Int
 
+    init(indices: [Int], coinsPerGem: Int) {
+        self.indices = indices
+        self.coinsPerGem = coinsPerGem
+    }
+
     init(indices: [Int], pieces: [BoardPiece]) {
         self.indices = indices
         let gems = indices.compactMap { index -> Gem? in

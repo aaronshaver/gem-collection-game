@@ -61,6 +61,7 @@ struct GameView: View {
                 collectionSelected: showingCollection, hasUnread: board.collection.hasUnread)
         }
         .onAppear { board.resolveIfNeeded() }
+        .onDisappear { closeStash() }
         .onChange(of: board.destructionIndex) { index in
             if index == nil && stashMode == .destroying { closeStash() }
         }
@@ -88,7 +89,7 @@ struct GameView: View {
             if showingCollection {
                 CollectionView(collection: board.collection, onClose: { showingCollection = false })
             } else {
-                StatsBarView(coins: board.coins)
+                StatsBarView(coins: board.coins, collected: board.collection.discovered.count)
                 GemBoardView(
                     pieces: board.pieces, collectedIDs: board.collectedIDs,
                     spawnRows: board.spawnRows, isResolving: board.isResolving,
@@ -108,14 +109,22 @@ struct GameView: View {
         GeometryReader { geometry in
             StashView(
                 stash: board.stash, choosingGem: stashMode == .choosing,
-                isResolving: board.isResolving, onClose: closeStash,
+                isResolving: board.isResolving, coins: board.coins, onClose: closeStash,
                 onAdd: {
+                    guard board.beginStashAction(.storing) else { return }
                     stashMode = .adding
                     showBanner("Choose a gem")
                 },
                 onPut: {
-                    stashMode = .choosing
-                    showBanner("Choose a gem to place on the board")
+                    guard board.beginStashAction(.placing) else { return }
+                    let occupied = board.stash.slots.indices.filter { board.stash.slots[$0] != nil }
+                    if occupied.count == 1, let slot = occupied.first {
+                        stashMode = .placing(slot)
+                        showBanner("Pick a location")
+                    } else {
+                        stashMode = .choosing
+                        showBanner("Choose a gem to place on the board")
+                    }
                 },
                 onChoose: { slot in
                     guard stashMode == .choosing else { return }
@@ -136,6 +145,7 @@ struct GameView: View {
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 Button("Cancel") {
+                    board.cancelStashAction()
                     stashMode = .drawer
                     banner = nil
                 }
@@ -177,6 +187,7 @@ struct GameView: View {
     }
 
     private func closeStash() {
+        board.cancelStashAction()
         stashMode = .closed
         banner = nil
     }

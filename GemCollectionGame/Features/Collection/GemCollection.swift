@@ -36,18 +36,8 @@ struct GemCollection: Codable, Equatable {
     /// Only contiguous exact runs in the line actually being removed qualify.
     mutating func record(lines: [[Int]], pieces: [BoardPiece]) {
         for line in lines {
-            var previous: GemCombination?
-            var count = 0
-            for index in line {
-                guard pieces.indices.contains(index), case .gem(let gem) = pieces[index] else {
-                    previous = nil
-                    count = 0
-                    continue
-                }
-                let combination = GemCombination(gem)
-                count = combination == previous ? count + 1 : 1
-                previous = combination
-                if count == 3 { record(combination) }
+            for run in MatchRules.exactRuns(in: line, pieces: pieces) {
+                if case .gem(let gem) = pieces[run[0]] { record(GemCombination(gem)) }
             }
         }
     }

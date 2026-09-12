@@ -33,13 +33,15 @@ final class StashTests: XCTestCase {
         pieces[0] = .gem(gem(0))
         pieces[1] = .gem(gem(1))
         defaults.set(
-            try JSONEncoder().encode(GameBoard.Save(seed: 1, configuration: .standard, pieces: pieces)),
+            try JSONEncoder().encode(GameBoard.Save(seed: 1, configuration: .standard, pieces: pieces, coins: 20)),
             forKey: GameBoard.storageKey)
         let board = GameBoard(defaults: defaults)
         XCTAssertEqual(board.stash.slots.count, 1)
         XCTAssertTrue(board.stash.isEmpty)
         XCTAssertFalse(board.stashGem(at: 2))
         XCTAssertFalse(board.stashGem(at: -1))
+        XCTAssertTrue(board.beginStashAction(.storing))
+        XCTAssertEqual(board.coins, 15)
         XCTAssertTrue(board.stashGem(at: 0))
         XCTAssertTrue(board.pieces[0].isRock)
         XCTAssertEqual(board.stash.slots[0], gem(0))
@@ -51,6 +53,8 @@ final class StashTests: XCTestCase {
         XCTAssertFalse(board.placeStashedGem(from: 1, at: 2))
         XCTAssertFalse(board.placeStashedGem(from: 0, at: 45))
         // A gem destination is replaced just as a rock destination would be.
+        XCTAssertTrue(board.beginStashAction(.placing))
+        XCTAssertEqual(board.coins, 10)
         XCTAssertTrue(board.placeStashedGem(from: 0, at: 1))
         XCTAssertEqual(board.pieces[1], pieces[0])
         XCTAssertTrue(board.stash.isEmpty)
@@ -63,7 +67,9 @@ final class StashTests: XCTestCase {
         try await Task.sleep(nanoseconds: 1_300_000_000)
         XCTAssertNil(board.destructionIndex)
         XCTAssertFalse(board.isResolving)
+        XCTAssertTrue(board.beginStashAction(.storing))
         XCTAssertTrue(board.stashGem(at: 1))
+        XCTAssertTrue(board.beginStashAction(.placing))
         XCTAssertTrue(board.placeStashedGem(from: 0, at: 2))
         XCTAssertEqual(board.pieces[2], pieces[0])
         XCTAssertEqual(Set(board.pieces.map(\.id)).count, 45)
@@ -80,10 +86,12 @@ final class StashTests: XCTestCase {
         var pieces = (0..<45).map { BoardPiece.rock(Rock(id: $0, seed: UInt64($0))) }
         for index in [0, 1, 9] { pieces[index] = .gem(gem(index)) }
         defaults.set(
-            try JSONEncoder().encode(GameBoard.Save(seed: 1, configuration: .standard, pieces: pieces)),
+            try JSONEncoder().encode(GameBoard.Save(seed: 1, configuration: .standard, pieces: pieces, coins: 20)),
             forKey: GameBoard.storageKey)
         let board = GameBoard(defaults: defaults)
+        XCTAssertTrue(board.beginStashAction(.storing))
         XCTAssertTrue(board.stashGem(at: 9))
+        XCTAssertTrue(board.beginStashAction(.placing))
         XCTAssertTrue(board.placeStashedGem(from: 0, at: 2))
         for _ in 0..<100 {
             if !board.isResolving { break }

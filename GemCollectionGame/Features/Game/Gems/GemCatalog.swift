@@ -30,6 +30,10 @@ struct PopulationConfiguration: Codable, Equatable {
     var colors: [GemColor]
     var shapes: [GemShape]
 
+    var uniqueCombinationCount: Int {
+        Set(colors.map(\.id)).count * Set(grades.map(\.id)).count * Set(shapes.map(\.id)).count
+    }
+
     static let standard = PopulationConfiguration(
         gemProbability: 0.75,
         grades: [

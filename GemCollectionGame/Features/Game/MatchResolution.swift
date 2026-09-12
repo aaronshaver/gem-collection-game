@@ -2,7 +2,27 @@ struct MatchBatch {
     let lines: [[Int]]
     var indices: Set<Int> { Set(lines.flatMap { $0 }) }
     let rewards: [MatchReward]
-    var coins: Int { rewards.reduce(0) { $0 + $1.indices.count * $1.coinsPerGem } }
+    var coins: Int {
+        var perGem: [Int: Int] = [:]
+        for reward in rewards {
+            for index in reward.indices {
+                perGem[index] = max(perGem[index] ?? 0, reward.coinsPerGem)
+            }
+        }
+        return perGem.values.reduce(0, +)
+    }
+
+    static func resolved(lines: [[Int]], pieces: [BoardPiece]) -> MatchBatch {
+        guard lines.count > 1 else {
+            return MatchBatch(lines: lines, rewards: lines.map { MatchReward(indices: $0, pieces: pieces) })
+        }
+        let all = Set(lines.flatMap { $0 })
+        let exact = Set(lines.flatMap { MatchRules.exactRuns(in: $0, pieces: pieces).flatMap { $0 } })
+        return MatchBatch(lines: lines, rewards: [
+            MatchReward(indices: exact.sorted(), coinsPerGem: 8),
+            MatchReward(indices: all.subtracting(exact).sorted(), coinsPerGem: 1)
+        ])
+    }
 }
 
 struct GravityResult {
@@ -58,10 +78,16 @@ enum MatchResolution {
             return lines.filter { $0[1] - $0[0] == step }
         } ?? []
         let candidates = preferred.isEmpty ? lines : preferred
-        // Stable board-order tie break. Each collection consumes exactly one straight line.
+        // Keep the existing gesture/board-order choice unless an exact set crosses both axes.
         let longest = candidates.reduce([Int]()) { $1.count > $0.count ? $1 : $0 }
-        let selected = longest.isEmpty ? [] : [longest]
-        return MatchBatch(lines: selected, rewards: selected.map { MatchReward(indices: $0, pieces: pieces) })
+        guard !longest.isEmpty else { return MatchBatch(lines: [], rewards: []) }
+        let exact = Set(MatchRules.exactRuns(in: longest, pieces: pieces).flatMap { $0 })
+        let crossing = lines.filter { line in
+            guard line != longest, line[1] - line[0] != longest[1] - longest[0] else { return false }
+            let otherExact = Set(MatchRules.exactRuns(in: line, pieces: pieces).flatMap { $0 })
+            return !exact.isDisjoint(with: otherExact)
+        }
+        return .resolved(lines: [longest] + crossing, pieces: pieces)
     }
 
     static func collapse(_ pieces: [BoardPiece], removing: Set<Int>, replacements: [BoardPiece],

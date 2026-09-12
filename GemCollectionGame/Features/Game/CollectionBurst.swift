@@ -2,7 +2,7 @@ import SwiftUI
 
 /// A short-lived layer: large polygon wedges split into smaller falling shards.
 struct CollectionBurst: View {
-    static let duration = 0.78
+    static let duration = 0.45
     let gem: Gem
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var startedAt = Date()
@@ -50,7 +50,7 @@ struct CollectionShatterFrame: View {
                 let darkness = gem.grade.id == "cracked" ? 0.88 : 1
                 let color = Color(red: gem.color.red * darkness, green: gem.color.green * darkness,
                                   blue: gem.color.blue * darkness)
-                CollectionSparks.draw(in: &context, center: center, size: size.width,
+                CollectionSparks.draw(in: &context, center: center, size: size.width * 0.65,
                                       color: color, seed: gem.seed, progress: progress)
                 for index in vertices.indices {
                     let triangle = [CGPoint.zero, vertices[index], vertices[(index + 1) % vertices.count]]
@@ -65,9 +65,9 @@ struct CollectionShatterFrame: View {
                         var shard = context
                         shard.opacity = max(0, opacity)
                         // A fast outward impulse comes first; gravity takes over after the blast.
-                        let spread = Double(fragmentIndex - 1) * fragmentProgress * size.width * 0.22
-                        shard.translateBy(x: center.x + centroid.x * blast * 1.7 + spread,
-                                          y: center.y + centroid.y * blast * 1.7 + size.height * (-0.22 * blast + 1.65 * fall * fall))
+                        let spread = Double(fragmentIndex - 1) * fragmentProgress * size.width * 0.12
+                        shard.translateBy(x: center.x + centroid.x * blast * 0.85 + spread,
+                                          y: center.y + centroid.y * blast * 0.85 + size.height * (-0.12 * blast + 0.75 * fall * fall))
                         shard.translateBy(x: centroid.x, y: centroid.y)
                         shard.rotate(by: .radians(Double(index % 2 == 0 ? 1 : -1) * progress * 1.2))
                         shard.translateBy(x: fragmentCenter.x - centroid.x, y: fragmentCenter.y - centroid.y)
