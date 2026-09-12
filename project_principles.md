@@ -7,4 +7,5 @@
 * But within the phone version and performance requirements, aim for a beautiful presentation: lush, vibrant, clean, modern, slick
 * Do not use emojis in the app unless specifically asked
 * Remind the user about standard mobile development practices (user is a backend developer who doesn't have a lot of mobile app development experience) where it's helpful. Prefer doing things in a modern, standard way unless the user explicitly overrides that after you ask the user during a choice point.
-* Don't modify the README.md file unless user asks for it
+* Don't modify any .md file unless user asks for it or unless you ask for specific permission and explain the need for it
+* Since the model (you) using the simulator can slow down the user's Mac and/or mean a fight for control of the simulator, default to asking the user for simulator use if you need to use it, explaining the specific need and only proceed if permission is granted each time.
