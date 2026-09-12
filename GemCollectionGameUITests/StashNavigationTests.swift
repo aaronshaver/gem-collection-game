@@ -16,8 +16,10 @@ final class StashNavigationTests: XCTestCase {
         XCTAssertTrue(app.buttons["Stash"].isSelected)
         XCTAssertTrue(app.buttons["Close stash"].exists)
         XCTAssertFalse(app.buttons["Put Gem on Board"].isEnabled)
+        XCTAssertTrue(app.staticTexts["0 / 1 slots"].exists)
+        XCTAssertFalse(app.staticTexts["Each transfer costs 5 coins. Cancel to refund."].exists)
         capture("Empty Stash")
-        app.buttons["Add Gem to Stash"].tap()
+        app.buttons["stash-slot-0"].tap()
         XCTAssertEqual(app.otherElements["coinCount"].label, "Coins: 15")
         XCTAssertTrue(board.exists)
         XCTAssertTrue(app.buttons["Stash"].isSelected)
@@ -26,7 +28,14 @@ final class StashNavigationTests: XCTestCase {
         rock.tap()
         XCTAssertTrue(board.exists)
         XCTAssertFalse(app.buttons["Close stash"].exists)
-        app.buttons["Cancel"].tap()
+        let prompt = app.staticTexts["Choose a gem"]
+        let dismissed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: prompt)
+        XCTAssertEqual(XCTWaiter.wait(for: [dismissed], timeout: 6), .completed)
+        XCTAssertTrue(app.otherElements["coinCount"].isHittable)
+        // Stash remains the cancellation route after the temporary prompt disappears.
+        app.buttons["Stash"].tap()
+        XCTAssertEqual(app.otherElements["coinCount"].label, "Coins: 20")
+        app.buttons["Stash"].tap()
         XCTAssertTrue(app.buttons["Close stash"].exists)
         app.buttons["Close stash"].tap()
         XCTAssertEqual(app.otherElements["coinCount"].label, "Coins: 20")
@@ -76,6 +85,11 @@ final class StashNavigationTests: XCTestCase {
         app.buttons["Close stash"].tap()
         app.buttons["Tools"].tap()
         XCTAssertTrue(board.exists)
+        app.buttons["Collection"].tap()
+        for color in ["red", "orange", "yellow", "green", "blue", "purple"] {
+            XCTAssertEqual(app.buttons["collection-color-\(color)"].value as? String, "0 of 12")
+        }
+        capture("Collection Counts")
     }
 
     @MainActor

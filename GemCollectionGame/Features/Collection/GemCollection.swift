@@ -26,6 +26,14 @@ struct GemCollection: Codable, Equatable {
     private(set) var recent: [GemCombination] = []
     private(set) var hasUnread = false
 
+    func count(for colorID: String, in catalog: PopulationConfiguration) -> Int {
+        let grades = Set(catalog.grades.map(\.id))
+        let shapes = Set(catalog.shapes.map(\.id))
+        return discovered.filter {
+            $0.colorID == colorID && grades.contains($0.gradeID) && shapes.contains($0.shapeID)
+        }.count
+    }
+
     mutating func record(_ combination: GemCombination) {
         guard discovered.insert(combination).inserted else { return }
         recent.insert(combination, at: 0)

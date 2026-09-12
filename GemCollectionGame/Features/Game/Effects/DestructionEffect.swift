@@ -1,16 +1,16 @@
 import SwiftUI
 
-/// Shared by board actions: flying rock and dirt, followed by rolling charcoal smoke.
+/// Shared by board actions: a brief burst of flying rock and dirt.
 /// Place in a cell-sized frame; the drawing surface extends beyond it for the debris.
 struct DestructionEffect: View {
-    static let duration = 0.55
+    static let duration = 0.36
     @State private var startedAt = Date()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 60)) { timeline in
             DestructionFrame(
-                progress: min(1, timeline.date.timeIntervalSince(startedAt) / Self.duration),
+                progress: min(0.65, timeline.date.timeIntervalSince(startedAt) / Self.duration * 0.65),
                 reduceMotion: reduceMotion)
         }
         .allowsHitTesting(false)
@@ -29,7 +29,6 @@ struct DestructionFrame: View {
                 let unit = size.width / 4 * 0.60
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)
                 drawDirt(in: context, center: center, unit: unit)
-                drawSmoke(in: context, center: center, unit: unit)
                 drawShards(in: context, center: center, unit: unit)
             }
             .frame(width: geometry.size.width * 4, height: geometry.size.height * 4)
@@ -88,29 +87,4 @@ struct DestructionFrame: View {
         }
     }
 
-    private func drawSmoke(in context: GraphicsContext, center: CGPoint, unit: Double) {
-        let smoke = max(0, (progress - 0.10) / 0.90)
-        guard smoke > 0 else { return }
-        var cloud = context
-        cloud.opacity = min(1, smoke / 0.16) * min(1, (1 - smoke) / 0.32)
-        cloud.addFilter(.blur(radius: unit * 0.045))
-        for index in 0..<38 {
-            let angle = Double(index) * 2.39996
-            let spread = reduceMotion ? 0.22 : 0.14 + smoke * 0.85
-            let distance = unit * spread * (0.25 + Double(index % 7) / 9)
-            let radius = unit * (0.16 + Double(index % 5) * 0.033) * (1 + smoke * 0.9)
-            let x = center.x + cos(angle) * distance
-            let y = center.y + sin(angle) * distance - (reduceMotion ? 0 : unit * smoke * 0.40)
-            let gray = index.isMultiple(of: 3) ? 0.035 : 0.16 + Double(index % 5) * 0.06
-            cloud.fill(
-                Path(
-                    ellipseIn: CGRect(
-                        x: x - radius, y: y - radius,
-                        width: radius * 2, height: radius * 1.7)),
-                with: .radialGradient(
-                    Gradient(colors: [Color(white: gray + 0.07), Color(white: gray)]),
-                    center: CGPoint(x: x - radius * 0.25, y: y - radius * 0.3),
-                    startRadius: 0, endRadius: radius))
-        }
-    }
 }

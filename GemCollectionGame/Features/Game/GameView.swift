@@ -40,7 +40,7 @@ struct GameView: View {
         .overlay(alignment: .top) { selectionPrompt }
         .task(id: banner) {
             guard banner != nil else { return }
-            do { try await Task.sleep(nanoseconds: 2_000_000_000) } catch { return }
+            do { try await Task.sleep(nanoseconds: 5_000_000_000) } catch { return }
             banner = nil
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
@@ -101,6 +101,7 @@ struct GameView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
                 .background(SoilBackground())
+                .modifier(DiscoveryCelebration(event: board.discoveryEvent))
             }
         }
     }
@@ -139,7 +140,7 @@ struct GameView: View {
 
     @ViewBuilder
     private var selectionPrompt: some View {
-        if stashMode.choosesBoard {
+        if stashMode.choosesBoard, banner != nil {
             HStack {
                 Text(stashMode == .adding ? "Choose a gem" : "Pick a location")
                     .font(.subheadline.weight(.semibold))

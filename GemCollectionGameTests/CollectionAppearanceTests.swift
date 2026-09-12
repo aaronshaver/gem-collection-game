@@ -6,7 +6,7 @@ final class CollectionAppearanceTests: XCTestCase {
     @MainActor
     func testRenderCompactDestructionStages() throws {
         let sheet = HStack(spacing: 12) {
-            ForEach([0.15, 0.35, 0.55, 0.8], id: \.self) { progress in
+            ForEach([0.1, 0.25, 0.4, 0.6], id: \.self) { progress in
                 DestructionFrame(progress: progress)
                     .frame(width: 64, height: 64)
                     .border(.white.opacity(0.4))
@@ -16,7 +16,7 @@ final class CollectionAppearanceTests: XCTestCase {
         let renderer = ImageRenderer(content: sheet)
         renderer.scale = 2
         let attachment = XCTAttachment(image: try XCTUnwrap(renderer.uiImage))
-        attachment.name = "Compact Destruction Stages"
+        attachment.name = "Rock and Dirt Burst Without Smoke"
         attachment.lifetime = .keepAlways
         add(attachment)
     }

@@ -91,13 +91,19 @@ struct CollectionView: View {
                 ForEach(catalog.colors) { color in
                     if let gem = categoryGem(color) {
                         Button { selectedColor = color } label: {
-                            artwork(gem, size: 70)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 104)
-                                .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 22))
+                            VStack(spacing: 8) {
+                                artwork(gem, size: 70)
+                                Text("\(collection.count(for: color.id, in: catalog)) of \(catalog.combinationsPerColor)")
+                                    .font(.subheadline.monospacedDigit())
+                                    .foregroundStyle(.white.opacity(0.8))
+                            }
+                            .padding(.vertical, 14)
+                            .frame(maxWidth: .infinity)
+                            .background(.white.opacity(0.07), in: RoundedRectangle(cornerRadius: 22))
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(color.name + " collection")
+                        .accessibilityValue("\(collection.count(for: color.id, in: catalog)) of \(catalog.combinationsPerColor)")
                         .accessibilityIdentifier("collection-color-\(color.id)")
                     }
                 }

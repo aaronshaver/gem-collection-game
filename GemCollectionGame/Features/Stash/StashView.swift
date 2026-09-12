@@ -31,7 +31,7 @@ struct StashView: View {
                 }
                 .accessibilityLabel("Add Gem to Stash")
                 .accessibilityValue("Costs \(GameBoard.stashCost) coins")
-                .disabled(!stash.hasFreeSlot || isResolving || choosingGem || coins < GameBoard.stashCost)
+                .disabled(!canAdd)
                 Button(action: onPut) {
                     actionLabel("Put Gem on Board", symbol: "arrow.up.forward.square")
                 }
@@ -41,13 +41,10 @@ struct StashView: View {
             }
             .buttonStyle(.bordered)
             .tint(.mint)
-            Text(choosingGem ? "\(GameBoard.stashCost) coins paid · Close to refund" : "Each transfer costs \(GameBoard.stashCost) coins. Cancel to refund.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
             HStack {
                 Text(
                     choosingGem
-                        ? "Choose a gem to place on the board" : "\(stash.slots.compactMap { $0 }.count) / \(stash.slots.count) slots filled"
+                        ? "Choose a gem to place on the board" : "\(stash.slots.compactMap { $0 }.count) / \(stash.slots.count) slots"
                 )
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -57,7 +54,7 @@ struct StashView: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 88), spacing: 14)], spacing: 14) {
                     ForEach(stash.slots.indices, id: \.self) { index in
                         Button {
-                            onChoose(index)
+                            if stash.slots[index] == nil { onAdd() } else { onChoose(index) }
                         } label: {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 22).fill(.white.opacity(0.06))
@@ -77,7 +74,7 @@ struct StashView: View {
                             }
                         }
                         .buttonStyle(.plain)
-                        .disabled(!choosingGem || stash.slots[index] == nil || isResolving)
+                        .disabled(stash.slots[index] == nil ? !canAdd : !choosingGem || isResolving)
                         .accessibilityLabel(stash.slots[index].map { BoardPiece.gem($0).label } ?? "Empty stash slot")
                         .accessibilityIdentifier("stash-slot-\(index)")
                     }
@@ -88,6 +85,10 @@ struct StashView: View {
         .background(GameBackground())
         .clipShape(RoundedRectangle(cornerRadius: 28))
         .accessibilityIdentifier("stashDrawer")
+    }
+
+    private var canAdd: Bool {
+        stash.hasFreeSlot && !isResolving && !choosingGem && coins >= GameBoard.stashCost
     }
 
     private func actionLabel(_ title: String, symbol: String) -> some View {

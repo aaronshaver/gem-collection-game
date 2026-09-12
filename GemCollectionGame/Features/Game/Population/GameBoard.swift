@@ -22,6 +22,7 @@ final class GameBoard: ObservableObject {
     static let storageKey = "gameBoard.population.v1"
     @Published private(set) var pieces: [BoardPiece]
     @Published private(set) var collection: GemCollection
+    @Published private(set) var discoveryEvent = 0
     @Published private(set) var stash: GemStash
     @Published private(set) var destructionIndex: Int?
     @Published private(set) var coins: Int
@@ -129,7 +130,7 @@ final class GameBoard: ObservableObject {
         pendingStashAction = nil
         pieces[index] = .gem(gem)
         pendingMatch = MatchResolution.scan(pieces, formedAfter: previous).lines
-        // Save the transfer atomically; the smoke is presentation only.
+        // Save the transfer atomically; the debris is presentation only.
         persist()
         destructionIndex = index
         isResolving = true
@@ -180,6 +181,7 @@ final class GameBoard: ObservableObject {
                     let gravity = MatchResolution.collapse(self.pieces, removing: batch.indices, replacements: incoming)
                     self.pendingMatch = MatchResolution.scan(gravity.pieces, formedAfter: self.pieces).lines
                     self.spawnRows = gravity.spawnRows
+                    let previousDiscoveryCount = self.collection.discovered.count
                     withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
                         self.collection.record(lines: batch.lines, pieces: self.pieces)
                         self.pieces = gravity.pieces
@@ -188,6 +190,7 @@ final class GameBoard: ObservableObject {
                     }
                     // Commit a full board and its reward together, even if the app closes mid-animation.
                     self.persist()
+                    if self.collection.discovered.count > previousDiscoveryCount { self.discoveryEvent += 1 }
                     try await Task.sleep(nanoseconds: 30_000_000)
                     withAnimation(.spring(response: 0.38, dampingFraction: 0.78)) {
                         self.spawnRows = [:]
