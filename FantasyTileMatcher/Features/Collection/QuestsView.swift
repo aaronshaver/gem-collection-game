@@ -34,7 +34,7 @@ struct QuestsView: View {
             Text("Current Quest").font(.headline).accessibilityAddTraits(.isHeader)
             if let quest = collection.current {
                 HStack(spacing: 20) {
-                    TileView(adventurer: quest).frame(width: 128, height: 128)
+                    TileView(adventurer: quest).frame(width: BoardLayout.tileSide, height: BoardLayout.tileSide)
                     VStack(alignment: .leading, spacing: 8) {
                         Text(quest.race.rawValue)
                         Text(quest.adventurerClass.rawValue)

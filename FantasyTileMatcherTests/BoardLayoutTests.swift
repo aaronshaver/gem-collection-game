@@ -7,13 +7,13 @@ final class BoardLayoutTests: XCTestCase {
     }
 
     func testSquareTilesUseFullBoardWithEqualEdgeAndInteriorGaps() {
-        for size in [CGSize(width: 350, height: 600), CGSize(width: 390, height: 650), CGSize(width: 800, height: 240)] {
+        for size in [CGSize(width: 390, height: 678), CGSize(width: 393, height: 700), CGSize(width: 430, height: 730)] {
             let layout = BoardLayout(availableSize: size)
             XCTAssertEqual(layout.width, size.width)
             XCTAssertEqual(layout.height, size.height)
-            XCTAssertGreaterThan(layout.tileSize, 0)
-            XCTAssertGreaterThanOrEqual(layout.gap.width, 12 - 0.001)
-            XCTAssertGreaterThanOrEqual(layout.gap.height, 12 - 0.001)
+            XCTAssertEqual(layout.tileSize, 128)
+            XCTAssertGreaterThan(layout.gap.width, 0)
+            XCTAssertGreaterThan(layout.gap.height, 0)
             let half = layout.tileSize / 2
             let first = layout.center(at: 0)
             let last = layout.center(at: 14)
@@ -35,10 +35,20 @@ final class BoardLayoutTests: XCTestCase {
         }
     }
 
-    func testZeroSpaceProducesZeroSize() {
-        let layout = BoardLayout(availableSize: .zero)
-        XCTAssertEqual(layout.tileSize, 0)
-        XCTAssertEqual(layout.gap, .zero)
-        XCTAssertEqual(layout.center(at: 14), .zero)
+    func testIPhone13ColumnSpacing() {
+        let layout = BoardLayout(availableSize: CGSize(width: 390, height: 678))
+        XCTAssertEqual(layout.gap.width, 1.5)
+        XCTAssertEqual(layout.spacing.width, 129.5)
+    }
+
+    func testInsufficientSpaceNeverShrinksOrOverlapsTiles() {
+        for size in [CGSize.zero, CGSize(width: 350, height: 600)] {
+            let layout = BoardLayout(availableSize: size)
+            XCTAssertEqual(layout.tileSize, 128)
+            XCTAssertEqual(layout.width, 384)
+            XCTAssertEqual(layout.height, 640)
+            XCTAssertEqual(layout.gap, .zero)
+            XCTAssertEqual(layout.center(at: 14), CGPoint(x: 320, y: 576))
+        }
     }
 }

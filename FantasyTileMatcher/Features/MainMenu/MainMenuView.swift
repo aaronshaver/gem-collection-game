@@ -12,7 +12,7 @@ struct MainMenuView: View {
         .safeAreaInset(edge: .bottom, alignment: .center, spacing: 0) {
             VStack(spacing: 4) {
                 Text("© 2026 Aaron Shaver")
-                Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.3.4")")
+                Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.3.5")")
             }
                 .font(.caption)
                 .foregroundStyle(.secondary)

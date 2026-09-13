@@ -7,22 +7,17 @@ struct TileView: View {
     var body: some View {
         GeometryReader { geometry in
             let side = min(geometry.size.width, geometry.size.height)
-            VStack(spacing: 1) {
-                HStack(spacing: 1) {
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
                     quadrant(adventurer.race.rawValue, side: side)
                     quadrant(adventurer.adventurerClass.rawValue, side: side)
                 }
-                HStack(spacing: 1) {
+                HStack(spacing: 0) {
                     quadrant(adventurer.ability.rawValue, side: side)
                     quadrant(adventurer.origin.rawValue, side: side)
                 }
             }
-            .background(.white.opacity(0.25))
             .clipShape(Rectangle())
-            .overlay {
-                Rectangle()
-                    .strokeBorder(.white.opacity(0.35), lineWidth: 1)
-            }
             .shadow(color: .black.opacity(0.25), radius: 2, y: 2)
         }
         .accessibilityElement(children: .ignore)
@@ -35,7 +30,7 @@ struct TileView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .padding(.horizontal, 2)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(width: side / 2, height: side / 2)
             .foregroundStyle(.white)
             .background { Rectangle().fill(Color(red: 0.16, green: 0.23, blue: 0.25).gradient) }
     }
