@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct UpgradesView: View {
+struct MarketView: View {
     @ObservedObject var board: GameBoard
     let onTravel: () -> Void
     let onClose: () -> Void
@@ -8,11 +8,12 @@ struct UpgradesView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Image(systemName: "arrow.up.circle.fill")
+                Image(systemName: "g.circle.fill")
+                    .symbolRenderingMode(.monochrome)
                     .foregroundStyle(.mint)
                     .frame(width: 44, height: 44)
                 Spacer()
-                Text("Upgrades")
+                Text("Market")
                 Spacer()
                 Button(action: onClose) {
                     Image(systemName: "xmark")
@@ -20,20 +21,20 @@ struct UpgradesView: View {
                         .background(.white.opacity(0.08), in: Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Close Upgrades")
+                .accessibilityLabel("Close Market")
             }
             .font(.system(size: 20, weight: .semibold))
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             ScrollView {
-                travelUpgrade.padding(20)
+                travelItem.padding(20)
             }
         }
         .background(GameBackground())
-        .accessibilityIdentifier("upgradesScreen")
+        .accessibilityIdentifier("marketScreen")
     }
 
-    private var travelUpgrade: some View {
+    private var travelItem: some View {
         Button(action: onTravel) {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Travel to another town nearby")

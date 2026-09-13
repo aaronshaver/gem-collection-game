@@ -6,7 +6,7 @@ struct GameView: View {
     @State private var fieldID = UUID()
     @State private var showingQuests = false
     @State private var showingDev = false
-    @State private var showingUpgrades = false
+    @State private var showingMarket = false
     @State private var travelRequested = false
     @State private var showingResetConfirmation = false
     @State private var devPreviewRequest: UUID?
@@ -41,20 +41,20 @@ struct GameView: View {
             GameNavigationBar(onMainMenu: { closeDev(); onMainMenu() },
                 onQuests: {
                     closeDev()
-                    showingUpgrades = false
+                    showingMarket = false
                     board.markCollectionRead()
                     showingQuests.toggle()
                 },
-                onUpgrades: {
+                onMarket: {
                     closeDev()
                     showingQuests = false
-                    showingUpgrades.toggle()
-                }, questsSelected: showingQuests, upgradesSelected: showingUpgrades,
+                    showingMarket.toggle()
+                }, questsSelected: showingQuests, marketSelected: showingMarket,
                 hasUnread: board.collection.hasUnread,
                 devSelected: showingDev, onDev: {
                     devPreviewRequest = nil
                     showingQuests = false
-                    showingUpgrades = false
+                    showingMarket = false
                     withAnimation(reduceMotion ? nil : .easeOut(duration: 0.22)) { showingDev.toggle() }
                 })
         }
@@ -62,7 +62,7 @@ struct GameView: View {
             Button("Reset All", role: .destructive) {
                 board.resetAll()
                 showingQuests = false
-                showingUpgrades = false
+                showingMarket = false
                 fieldID = UUID()
             }
             Button("Cancel", role: .cancel) {}
@@ -84,12 +84,12 @@ struct GameView: View {
         VStack(spacing: 0) {
             if showingQuests {
                 QuestsView(collection: board.collection, onClose: { showingQuests = false })
-            } else if showingUpgrades {
-                UpgradesView(board: board, onTravel: {
+            } else if showingMarket {
+                MarketView(board: board, onTravel: {
                     guard board.canTravel, !travelRequested else { return }
                     travelRequested = true
-                    showingUpgrades = false
-                }, onClose: { showingUpgrades = false })
+                    showingMarket = false
+                }, onClose: { showingMarket = false })
             } else {
                 StatsBarView(gold: board.gold, days: board.days)
                 TileBoardView(pieces: board.pieces, collectedIDs: board.collectedIDs,
