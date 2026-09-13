@@ -41,36 +41,28 @@ struct GameView: View {
             GameNavigationBar(onMainMenu: { closeDev(); onMainMenu() },
                 onQuests: {
                     closeDev()
+                    showingUpgrades = false
                     board.markCollectionRead()
                     showingQuests.toggle()
                 },
                 onUpgrades: {
                     closeDev()
                     showingQuests = false
-                    showingUpgrades = true
-                }, questsSelected: showingQuests, hasUnread: board.collection.hasUnread,
+                    showingUpgrades.toggle()
+                }, questsSelected: showingQuests, upgradesSelected: showingUpgrades,
+                hasUnread: board.collection.hasUnread,
                 devSelected: showingDev, onDev: {
                     devPreviewRequest = nil
                     showingQuests = false
+                    showingUpgrades = false
                     withAnimation(reduceMotion ? nil : .easeOut(duration: 0.22)) { showingDev.toggle() }
                 })
-        }
-        .sheet(isPresented: $showingUpgrades, onDismiss: {
-            if travelRequested {
-                travelRequested = false
-                board.travelToNearbyTown()
-            }
-        }) {
-            UpgradesView(board: board, onTravel: {
-                guard board.canTravel, !travelRequested else { return }
-                travelRequested = true
-                showingUpgrades = false
-            })
         }
         .alert("Reset all progress?", isPresented: $showingResetConfirmation) {
             Button("Reset All", role: .destructive) {
                 board.resetAll()
                 showingQuests = false
+                showingUpgrades = false
                 fieldID = UUID()
             }
             Button("Cancel", role: .cancel) {}
@@ -92,6 +84,12 @@ struct GameView: View {
         VStack(spacing: 0) {
             if showingQuests {
                 QuestsView(collection: board.collection, onClose: { showingQuests = false })
+            } else if showingUpgrades {
+                UpgradesView(board: board, onTravel: {
+                    guard board.canTravel, !travelRequested else { return }
+                    travelRequested = true
+                    showingUpgrades = false
+                }, onClose: { showingUpgrades = false })
             } else {
                 StatsBarView(gold: board.gold, days: board.days)
                 TileBoardView(pieces: board.pieces, collectedIDs: board.collectedIDs,
@@ -102,6 +100,12 @@ struct GameView: View {
                                value: board.isTraveling)
                     .background(SoilBackground())
                     .modifier(DiscoveryCelebration(event: board.discoveryEvent))
+                    .onAppear {
+                        if travelRequested {
+                            travelRequested = false
+                            board.travelToNearbyTown()
+                        }
+                    }
             }
         }
     }

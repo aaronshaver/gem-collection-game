@@ -3,14 +3,18 @@ import SwiftUI
 struct UpgradesView: View {
     @ObservedObject var board: GameBoard
     let onTravel: () -> Void
-    @Environment(\.dismiss) private var dismiss
+    let onClose: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 0) {
             HStack {
-                Text("Upgrades").font(.title2.bold())
+                Image(systemName: "arrow.up.circle.fill")
+                    .foregroundStyle(.mint)
+                    .frame(width: 44, height: 44)
                 Spacer()
-                Button { dismiss() } label: {
+                Text("Upgrades")
+                Spacer()
+                Button(action: onClose) {
                     Image(systemName: "xmark")
                         .frame(width: 44, height: 44)
                         .background(.white.opacity(0.08), in: Circle())
@@ -18,42 +22,46 @@ struct UpgradesView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Close Upgrades")
             }
-            Button(action: onTravel) {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Travel to another town nearby")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                    Text("Refreshes board randomly")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    HStack(spacing: 20) {
-                        CoinLabel(amount: GameBoard.travelGoldCost)
-                        DayLabel(amount: GameBoard.travelDayCost)
-                    }
-                    .font(.subheadline.weight(.semibold))
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
-                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(GameTheme.accent.opacity(0.35), lineWidth: 1)
-                }
-                .opacity(board.canTravel ? 1 : 0.45)
+            .font(.system(size: 20, weight: .semibold))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            ScrollView {
+                travelUpgrade.padding(20)
             }
-            .buttonStyle(.plain)
-            .disabled(!board.canTravel)
-            .accessibilityLabel("Travel to another town nearby")
-            .accessibilityValue("Costs 2 gold and takes 1 day")
-            .accessibilityHint("Refreshes board randomly")
-            .accessibilityIdentifier("travelToTown")
-            Spacer(minLength: 0)
         }
-        .padding(20)
         .background(GameBackground())
-        .tint(GameTheme.accent)
-        .preferredColorScheme(.dark)
-        .presentationDetents([.medium])
         .accessibilityIdentifier("upgradesScreen")
+    }
+
+    private var travelUpgrade: some View {
+        Button(action: onTravel) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Travel to another town nearby")
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                Text("Refreshes board randomly")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 20) {
+                    CoinLabel(amount: GameBoard.travelGoldCost)
+                    DayLabel(amount: GameBoard.travelDayCost)
+                }
+                .font(.subheadline.weight(.semibold))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+            .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 18))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18)
+                    .strokeBorder(GameTheme.accent.opacity(0.35), lineWidth: 1)
+            }
+            .opacity(board.canTravel ? 1 : 0.45)
+        }
+        .buttonStyle(.plain)
+        .disabled(!board.canTravel)
+        .accessibilityLabel("Travel to another town nearby")
+        .accessibilityValue("Costs 2 gold and takes 1 day")
+        .accessibilityHint("Refreshes board randomly")
+        .accessibilityIdentifier("travelToTown")
     }
 }

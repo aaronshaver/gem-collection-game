@@ -5,6 +5,7 @@ struct GameNavigationBar: View {
     let onQuests: () -> Void
     let onUpgrades: () -> Void
     var questsSelected = false
+    var upgradesSelected = false
     var hasUnread = false
     var devSelected = false
     var onDev: () -> Void = {}
@@ -15,7 +16,7 @@ struct GameNavigationBar: View {
             tab(
                 "Quests", symbol: questsSelected ? "trophy.fill" : "trophy",
                 selected: questsSelected, unread: hasUnread, action: onQuests)
-            tab("Upgrades", symbol: "arrow.up.circle.fill", action: onUpgrades)
+            tab("Upgrades", symbol: "arrow.up.circle.fill", selected: upgradesSelected, action: onUpgrades)
             #if DEBUG
             tab("Dev", symbol: "slider.horizontal.3", selected: devSelected, action: onDev)
             #endif

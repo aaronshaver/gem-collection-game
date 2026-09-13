@@ -44,8 +44,6 @@ struct QuestsView: View {
                     .font(.subheadline)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
-                .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 24))
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Current Quest: \(quest.label)")
                 .accessibilityIdentifier("currentQuest")
