@@ -9,17 +9,45 @@ final class GameBoard: ObservableObject {
         var pieces: [Tile]?
         var gold: Int
         var collection: QuestCollection
+        var days: Int = 0
+
+        init(pieces: [Tile]?, gold: Int, collection: QuestCollection, days: Int = 0) {
+            self.pieces = pieces
+            self.gold = gold
+            self.collection = collection
+            self.days = days
+        }
+
+        private enum CodingKeys: String, CodingKey { case pieces, gold, collection, days }
+
+        init(from decoder: Decoder) throws {
+            let values = try decoder.container(keyedBy: CodingKeys.self)
+            pieces = try values.decodeIfPresent([Tile].self, forKey: .pieces)
+            gold = try values.decode(Int.self, forKey: .gold)
+            collection = try values.decode(QuestCollection.self, forKey: .collection)
+            days = try values.decodeIfPresent(Int.self, forKey: .days) ?? 0
+        }
     }
     static let storageKey = "fantasyTileMatcher.v1"
     @Published private(set) var pieces: [Tile]
     @Published private(set) var collection: QuestCollection
     @Published private(set) var gold: Int
+    @Published private(set) var days: Int
+    @Published private(set) var isTraveling = false
     @Published private(set) var discoveryEvent = 0
     @Published private(set) var isResolving = false
     @Published private(set) var collectedIDs: Set<Int> = []
     @Published private(set) var spawnRows: [Int: Int] = [:]
     private var resolutionTask: Task<Void, Never>?
+    private var travelTask: Task<Void, Never>?
     private let defaults: UserDefaults
+    static let travelGoldCost = 2
+    static let travelDayCost = 1
+    static let travelFadeDuration = 0.25
+
+    var canTravel: Bool {
+        !isResolving && !isTraveling && gold >= Self.travelGoldCost && days <= Int.max - Self.travelDayCost
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -30,17 +58,19 @@ final class GameBoard: ObservableObject {
            let save = try? JSONDecoder().decode(Save.self, from: data), Self.isValid(save) {
             pieces = save.pieces ?? Self.newBoard()
             gold = save.gold
+            days = save.days
             collection = save.collection
         } else {
             pieces = Self.newBoard()
             gold = 0
+            days = 0
             collection = QuestCollection()
         }
         persist()
     }
 
     private static func isValid(_ save: Save) -> Bool {
-        save.gold >= 0 &&
+        save.gold >= 0 && save.days >= 0 &&
         (save.pieces.map { $0.count == BoardLayout.cellCount && Set($0.map(\.id)).count == BoardLayout.cellCount } ?? true) &&
         (save.collection.current.map { !save.collection.completed.contains($0) } ??
          (save.collection.completed.count == Adventurer.all.count))
@@ -55,8 +85,14 @@ final class GameBoard: ObservableObject {
     #if DEBUG
     func previewDiscovery() { discoveryEvent += 1 }
 
+    func addGold() {
+        guard gold <= Int.max - 1_000 else { return }
+        gold += 1_000
+        persist()
+    }
+
     func addRandomCompletion() {
-        guard !isResolving else { return }
+        guard !isResolving, !isTraveling else { return }
         var random = SystemRandomNumberGenerator()
         collection.addRandomCompletions(using: &random)
         persist()
@@ -64,6 +100,9 @@ final class GameBoard: ObservableObject {
     #endif
 
     private func cancelResolution() {
+        travelTask?.cancel()
+        travelTask = nil
+        isTraveling = false
         resolutionTask?.cancel()
         resolutionTask = nil
         isResolving = false
@@ -83,6 +122,7 @@ final class GameBoard: ObservableObject {
         cancelResolution()
         pieces = Self.newBoard()
         gold = 0
+        days = 0
         collection = QuestCollection()
         discoveryEvent = 0
         persist()
@@ -90,7 +130,7 @@ final class GameBoard: ObservableObject {
 
     @discardableResult
     func swap(_ source: Int, _ target: Int) -> Bool {
-        guard !isResolving, SwapRules.canSwap(source, target, in: pieces) else { return false }
+        guard !isResolving, !isTraveling, SwapRules.canSwap(source, target, in: pieces) else { return false }
         pieces.swapAt(source, target)
         persist()
         resolveIfNeeded()
@@ -99,7 +139,7 @@ final class GameBoard: ObservableObject {
 
     /// A cleared board, gold and Quest completion are committed together; animation can safely restart on launch.
     func resolveIfNeeded() {
-        guard !isResolving, MatchRules.hasMatch(in: pieces) else { return }
+        guard !isResolving, !isTraveling, MatchRules.hasMatch(in: pieces) else { return }
         isResolving = true
         resolutionTask = Task { @MainActor [weak self] in
             guard let self else { return }
@@ -136,8 +176,33 @@ final class GameBoard: ObservableObject {
         }
     }
 
+    /// Commit the fare, elapsed day, and unfiltered random board together after the fade.
+    @discardableResult
+    func travelToNearbyTown() -> Bool {
+        guard canTravel else { return false }
+        isTraveling = true
+        travelTask = Task { @MainActor [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: UInt64(Self.travelFadeDuration * 1_000_000_000))
+                try Task.checkCancellation()
+                guard let self else { return }
+                let nextID = (self.pieces.map(\.id).max() ?? 0) + 1
+                self.pieces = PopulationGenerator().freshField(seed: .random(in: .min ... .max), startingID: nextID)
+                self.gold -= Self.travelGoldCost
+                self.days += Self.travelDayCost
+                self.persist()
+                self.isTraveling = false
+                self.travelTask = nil
+                self.resolveIfNeeded()
+            } catch {
+                // Reset or refresh cancelled this trip before any cost was committed.
+            }
+        }
+        return true
+    }
+
     private func persist() {
-        let save = Save(pieces: pieces, gold: gold, collection: collection)
+        let save = Save(pieces: pieces, gold: gold, collection: collection, days: days)
         if let data = try? JSONEncoder().encode(save) { defaults.set(data, forKey: Self.storageKey) }
     }
 }

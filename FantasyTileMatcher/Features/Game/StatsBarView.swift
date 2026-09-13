@@ -2,7 +2,7 @@ import SwiftUI
 
 struct StatsBarView: View {
     let gold: Int
-    let completed: Int
+    let days: Int
 
     var body: some View {
         HStack(spacing: 6) {
@@ -11,11 +11,8 @@ struct StatsBarView: View {
                 .accessibilityLabel("Gold: \(gold)")
                 .accessibilityIdentifier("goldCount")
             Spacer()
-            Text("\(completed) of \(Adventurer.all.count) Quests Completed")
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .accessibilityIdentifier("questCount")
+            DayLabel(amount: days)
+                .accessibilityIdentifier("dayCount")
         }
         .font(.system(.caption, weight: .semibold))
         .foregroundStyle(.white.opacity(0.8))

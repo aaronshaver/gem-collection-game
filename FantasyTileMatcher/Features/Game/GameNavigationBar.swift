@@ -3,6 +3,7 @@ import SwiftUI
 struct GameNavigationBar: View {
     let onMainMenu: () -> Void
     let onQuests: () -> Void
+    let onUpgrades: () -> Void
     var questsSelected = false
     var hasUnread = false
     var devSelected = false
@@ -14,7 +15,7 @@ struct GameNavigationBar: View {
             tab(
                 "Quests", symbol: questsSelected ? "trophy.fill" : "trophy",
                 selected: questsSelected, unread: hasUnread, action: onQuests)
-            tab("Upgrades", symbol: "arrow.up.circle.fill", action: {})
+            tab("Upgrades", symbol: "arrow.up.circle.fill", action: onUpgrades)
             #if DEBUG
             tab("Dev", symbol: "slider.horizontal.3", selected: devSelected, action: onDev)
             #endif

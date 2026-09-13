@@ -6,6 +6,8 @@ struct GameView: View {
     @State private var fieldID = UUID()
     @State private var showingQuests = false
     @State private var showingDev = false
+    @State private var showingUpgrades = false
+    @State private var travelRequested = false
     @State private var showingResetConfirmation = false
     @State private var devPreviewRequest: UUID?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -21,6 +23,7 @@ struct GameView: View {
                 Color.black.opacity(0.4).onTapGesture { closeDev() }.accessibilityHidden(true)
                 DevMenu(isResolving: board.isResolving, onClose: closeDev,
                     onAddRandomCompletion: { closeDev(); board.addRandomCompletion() },
+                    onAddGold: { closeDev(); board.addGold() },
                     onReset: { closeDev(); showingResetConfirmation = true },
                     onRefresh: {
                         closeDev()
@@ -41,12 +44,28 @@ struct GameView: View {
                     board.markCollectionRead()
                     showingQuests.toggle()
                 },
-                questsSelected: showingQuests, hasUnread: board.collection.hasUnread,
+                onUpgrades: {
+                    closeDev()
+                    showingQuests = false
+                    showingUpgrades = true
+                }, questsSelected: showingQuests, hasUnread: board.collection.hasUnread,
                 devSelected: showingDev, onDev: {
                     devPreviewRequest = nil
                     showingQuests = false
                     withAnimation(reduceMotion ? nil : .easeOut(duration: 0.22)) { showingDev.toggle() }
                 })
+        }
+        .sheet(isPresented: $showingUpgrades, onDismiss: {
+            if travelRequested {
+                travelRequested = false
+                board.travelToNearbyTown()
+            }
+        }) {
+            UpgradesView(board: board, onTravel: {
+                guard board.canTravel, !travelRequested else { return }
+                travelRequested = true
+                showingUpgrades = false
+            })
         }
         .alert("Reset all progress?", isPresented: $showingResetConfirmation) {
             Button("Reset All", role: .destructive) {
@@ -74,10 +93,13 @@ struct GameView: View {
             if showingQuests {
                 QuestsView(collection: board.collection, onClose: { showingQuests = false })
             } else {
-                StatsBarView(gold: board.gold, completed: board.collection.completed.count)
+                StatsBarView(gold: board.gold, days: board.days)
                 TileBoardView(pieces: board.pieces, collectedIDs: board.collectedIDs,
-                              spawnRows: board.spawnRows, isResolving: board.isResolving, onSwap: board.swap)
+                              spawnRows: board.spawnRows, isResolving: board.isResolving || board.isTraveling, onSwap: board.swap)
                     .id(fieldID)
+                    .opacity(board.isTraveling ? 0 : 1)
+                    .animation(board.isTraveling ? .easeOut(duration: GameBoard.travelFadeDuration) : nil,
+                               value: board.isTraveling)
                     .background(SoilBackground())
                     .modifier(DiscoveryCelebration(event: board.discoveryEvent))
             }

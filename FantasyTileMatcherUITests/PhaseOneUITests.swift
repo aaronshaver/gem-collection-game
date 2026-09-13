@@ -10,7 +10,7 @@ final class PhaseOneUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Fantasy Tile Matcher"].exists)
         XCTAssertTrue(app.buttons["Tutorial"].exists)
         XCTAssertTrue(app.staticTexts["© 2026 Aaron Shaver"].exists)
-        XCTAssertTrue(app.staticTexts["Version 0.3.5"].exists)
+        XCTAssertTrue(app.staticTexts["Version 0.4.0"].exists)
         capture("Main menu")
         app.buttons["Play"].tap()
         XCTAssertTrue(app.otherElements["tileBoard"].waitForExistence(timeout: 5))
@@ -22,7 +22,7 @@ final class PhaseOneUITests: XCTestCase {
         }
         XCTAssertFalse(app.otherElements["tile-15"].exists)
         XCTAssertFalse(app.buttons["Stash"].exists)
-        XCTAssertEqual(app.staticTexts["Version 0.3.5"].exists, false)
+        XCTAssertEqual(app.staticTexts["Version 0.4.0"].exists, false)
         capture("Three by five board")
         XCTAssertTrue(app.buttons["Upgrades"].exists)
         XCTAssertLessThan(app.buttons["Main Menu"].frame.minX, app.buttons["Quests"].frame.minX)

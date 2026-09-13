@@ -5,6 +5,7 @@ struct DevMenu: View {
     let isResolving: Bool
     let onClose: () -> Void
     let onAddRandomCompletion: () -> Void
+    let onAddGold: () -> Void
     let onReset: () -> Void
     let onRefresh: () -> Void
     let onPreviewDiscovery: () -> Void
@@ -41,6 +42,11 @@ struct DevMenu: View {
             }
             .accessibilityIdentifier("addRandomCompletion")
             .disabled(isResolving)
+            Button(action: onAddGold) {
+                Label("Add 1,000 Gold", systemImage: "g.circle.fill")
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            }
+            .accessibilityIdentifier("addGold")
             Button(role: .destructive, action: onReset) {
                 Label("Reset All", systemImage: "arrow.counterclockwise")
                     .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
